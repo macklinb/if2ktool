@@ -1,8 +1,8 @@
-# if2ktool - A tool used to migrate some stats (play count, rating, date added and last played) from iTunes to foobar2000's foo_playcount component (Playback Statistics).
+# if2ktool
 
 - [Overview](#overview)
     - [Requirements](#requirements)
-    - [Third party software/libraries used](#third-party-software/libraries-used)
+    - [Third party libraries used](#third-party-libraries-used)
     - [Quick start](#quick-start)
 - [Mapping to files](#mapping-to-files)
 	- [Modes: Direct](#modes-direct)
@@ -20,7 +20,6 @@
 - [Troubleshooting + other stuff](#troubleshooting--other-stuff)
 
 ## Overview
-
 This tool is aimed at people migrating a music library from iTunes to foobar2000, and allows you to keep the various statistics and dates that are saved by iTunes. It reads these fields from your iTunes Library XML, and writes them to the file tags that are expected by the import function of foo_playcount. You can transfer playlists too.
 
 Note that it only works in one direction! You cannot import a collection of files and have them be matched with the XML.
@@ -32,7 +31,7 @@ This tool is very much experimental, and is still in development. By using it, y
 * .NET Framework Version 4.7.2 runtime - [download](https://dotnet.microsoft.com/download)
 * The above requires Windows 7 SP1 or higher.
 
-### Third party software/libraries used
+### Third party libraries used
 * <b>TagLib# (TagLib-Sharp)</b> - Tag reading and writing<br/>
 Copyright © 2019 Mono Project<br/>
 Link: https://github.com/mono/taglib-sharp<br/>
@@ -209,12 +208,12 @@ After mapping the iTunes Library XML to the files, the next step is to actually 
 
 The following table represents the tags that are written to the files and read by foo_playcount:
 
-Tag | Plist key | Description
---- | --- | --- | ---
-added_timestamp | Date&nbsp;Added | Integer - [LDAP](https://docs.microsoft.com/en-us/windows/desktop/sysinfo/file-times) timestamp (also called Windows NT time format, [FILETIME](https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime), SYSTEMTIME, NTFS file time)
-last_played_timestamp | Play&nbsp;Date | Integer - Same as above
-play_count | Play&nbsp;Count | Integer - Number of plays
-rating | Rating | Popularimeter (POPM) tag in a range of 0-255 (byte):<br/>1 &nbsp;&nbsp;&nbsp;&nbsp;= ★<br/>64 &nbsp;&nbsp;= ★★<br/>128 = ★★★<br/>196 = ★★★★<br/>255 = ★★★★★
+| Tag | Plist key | Description |
+| --- | --- | --- |
+| added_timestamp | Date&nbsp;Added | Integer - [LDAP](https://docs.microsoft.com/en-us/windows/desktop/sysinfo/file-times) timestamp (also called Windows NT time format, [FILETIME](https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime), SYSTEMTIME, NTFS file time) |
+| last_played_timestamp | Play&nbsp;Date | Integer - Same as above |
+| play_count | Play&nbsp;Count | Integer - Number of plays |
+| rating | Rating | Popularimeter (POPM) tag in a range of 0-255 (byte):<br/>1 &nbsp;&nbsp;&nbsp;&nbsp;= ★<br/>64 &nbsp;&nbsp;= ★★<br/>128 = ★★★<br/>196 = ★★★★<br/>255 = ★★★★★ |
 
 ### Method 1 - Writing tags directly
 This writes tags directly to the file using the excellent [TagLib-Sharp](https://github.com/mono/taglib-sharp) library. Writing tags with this method is much faster than doing so with Masstagger.
@@ -344,7 +343,7 @@ This generates a file like the following:
         "artist": "Daft Punk",
         "album": "Homework",
         "trackNumber": 01
-        "path": "D:\\Macklin\\Music\\Daft Punk\\Homework\\High Fidelity\\10 High Fidelity.mp3"
+        "path": "D:\\some\\path\\to\\Music\\Daft Punk\\Homework\\High Fidelity\\10 High Fidelity.mp3"
     },
     ...
     ]
