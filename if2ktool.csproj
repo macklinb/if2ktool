@@ -1,0 +1,258 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9223B45D-2A52-4693-89FF-131F5F1F34DF}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>if2ktool</RootNamespace>
+    <AssemblyName>if2ktool</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>false</Deterministic>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icon_256px.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.3.3, Culture=neutral, PublicKeyToken=8985beaab7ea3f04, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft-WindowsAPICodePack-Core.1.1.3.3\lib\net452\Microsoft.WindowsAPICodePack.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.3.3, Culture=neutral, PublicKeyToken=8985beaab7ea3f04, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft-WindowsAPICodePack-Shell.1.1.3.3\lib\net452\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="taglib-sharp, Version=2.1.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>taglib-sharp-net472\taglib-sharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Classes\Data\Enums.cs" />
+    <Compile Include="Classes\Data\Playlist.cs" />
+    <Compile Include="Classes\Data\Settings.cs" />
+    <Compile Include="Classes\iTunes\Enums.cs" />
+    <Compile Include="Classes\Data\SortableBindingList.cs" />
+    <Compile Include="Classes\Data\ProgressArgs.cs" />
+    <Compile Include="Classes\iTunes\SmartPlaylist.cs" />
+    <Compile Include="Classes\iTunes\SmartPlaylistParser.cs" />
+    <Compile Include="Classes\Utility\DataConverter.cs" />
+    <Compile Include="Classes\Utility\ConsoleHelper.cs" />
+    <Compile Include="Classes\Data\Consts.cs" />
+    <Compile Include="Classes\Utility\DateTimePickerAlt.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Classes\Utility\DateTimePickerCell.cs" />
+    <Compile Include="Classes\Data\Entry.cs" />
+    <Compile Include="Classes\Utility\DebugStack.cs" />
+    <Compile Include="Classes\Utility\Debug.cs" />
+    <None Include="Classes\Utility\Diff.cs.unused" />
+    <Compile Include="Classes\Utility\ExtensionMethods.cs" />
+    <Compile Include="Classes\Utility\FileLockUtility.cs" />
+    <Compile Include="Classes\Utility\PlistHelper.cs" />
+    <Compile Include="Classes\Workers\TagWriterWorker.cs" />
+    <Compile Include="Forms\Prompts\TagWriterErrors.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Prompts\TagWriterErrors.Designer.cs">
+      <DependentUpon>TagWriterErrors.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\ExportMasstaggerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\ExportMasstaggerForm.Designer.cs">
+      <DependentUpon>ExportMasstaggerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\ExportPlaylistForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\ExportPlaylistForm.Designer.cs">
+      <DependentUpon>ExportPlaylistForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\GenerateLookupJson.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\GenerateLookupJson.Designer.cs">
+      <DependentUpon>GenerateLookupJson.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Main.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Main.Designer.cs">
+      <DependentUpon>Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchLookupMultiple.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchLookupMultiple.Designer.cs">
+      <DependentUpon>MatchLookupMultiple.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchConfirmPrompt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchConfirmPrompt.Designer.cs">
+      <DependentUpon>MatchConfirmPrompt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchManualPrompt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Prompts\MatchManualPrompt.Designer.cs">
+      <DependentUpon>MatchManualPrompt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\PreferencesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PreferencesForm.Designer.cs">
+      <DependentUpon>PreferencesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\MappingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\MappingForm.Designer.cs">
+      <DependentUpon>MappingForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Classes\Workers\MappingWorker.cs" />
+    <Compile Include="Forms\Prompts\ListLookupEntries.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Prompts\ListLookupEntries.Designer.cs">
+      <DependentUpon>ListLookupEntries.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\GenerateReplicateLibraryStructure.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\GenerateReplicateLibraryStructure.Designer.cs">
+      <DependentUpon>GenerateReplicateLibraryStructure.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Tools\WriteTagsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Tools\WriteTagsForm.Designer.cs">
+      <DependentUpon>WriteTagsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Classes\Workers\TagWriterWorker_ParallelTest.cs.bkup" />
+    <EmbeddedResource Include="Forms\Prompts\TagWriterErrors.resx">
+      <DependentUpon>TagWriterErrors.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\ExportMasstaggerForm.resx">
+      <DependentUpon>ExportMasstaggerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\ExportPlaylistForm.resx">
+      <DependentUpon>ExportPlaylistForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\GenerateLookupJson.resx">
+      <DependentUpon>GenerateLookupJson.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Main.resx">
+      <DependentUpon>Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Prompts\MatchLookupMultiple.resx">
+      <DependentUpon>MatchLookupMultiple.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Prompts\MatchConfirmPrompt.resx">
+      <DependentUpon>MatchConfirmPrompt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Prompts\MatchManualPrompt.resx">
+      <DependentUpon>MatchManualPrompt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\PreferencesForm.resx">
+      <DependentUpon>PreferencesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\MappingForm.resx">
+      <DependentUpon>MappingForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Prompts\ListLookupEntries.resx">
+      <DependentUpon>ListLookupEntries.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\GenerateReplicateLibraryStructure.resx">
+      <DependentUpon>GenerateReplicateLibraryStructure.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Tools\WriteTagsForm.resx">
+      <DependentUpon>WriteTagsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CreateLookupJSON.ahk" />
+    <None Include="Resources\json_patterns.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CreateLookupJSON.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="icon_256px.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>del /q CreateLookupJSON.exe json_patterns.txt</PreBuildEvent>
+  </PropertyGroup>
+</Project>

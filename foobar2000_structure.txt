@@ -1,0 +1,60 @@
+The following is a few notes about the file structure of foobar2000's library, just from what I've deduced. These notes are missing a lot of data that I have no clue about.
+
+===
+Metadata is stored in %APPDATA%/Roaming/foobar2000/library/library ID/
+All values are little endian.
+
+meta_xxxx - Metadata files
+56 bytes: ?
+4 bytes: Int32 - Length of IDv3 metadata block, containing the metadata for all tracks - starting after directly after this length
+Metadata block: Of aformentioned length, with a null byte before and after
+4 bytes: Null ?
+4 bytes: Integer - Length of file data block of first file (as seen in foobar track properties)
+4 bytes: Null ?
+4 bytes: Integer - Index (0 based)
+8 bytes: Integer - File size in bytes 
+8 bytes: Integer - FILETIME, last modified UTC
+4 bytes: ?
+
+tree = Directory tree
+4 bytes: Length of path
+n bytes: Data - UTF-8 Directory path
+4 bytes: Integer - Number of files in directory
+- File name block -
+4 bytes: Integer - Length of file name
+n bytes: Data - UTF-8 File name string
+8 bytes: Integer - FILETIME, last modified UTC (matches with above in metadata)
+16 bytes: ? - Start with 01
+- End file name block -
+The above block repeats per number of files in the directory
+4 bytes end
+
+===
+Playback statistics:
+Data is stored in %APPDATA%/Roaming/foobar2000/library/index-data/C653739F-14B3-4EF2-819B-A3E2883230AE. Each entry is 64 bytes.
+
+4 bytes: Start of entry
+8 bytes: Integer as hex base - Entry ID
+8 bytes: FILETIME UTC - Last saved time
+8 bytes: Integer - Play count
+8 bytes: FILETIME UTC - First played
+8 bytes: FILETIME UTC - Last played
+8 bytes: FILETIME UTC - Date added
+4 bytes: Short - Rating, POPM-ish value (see below)
+4 bytes: ? Unknown, not an identifier
+4 bytes: Null, end of file (otherwise replaced with start of entry)
+
+Entry ID:
+Based on the IDv3 track title + album + album artist (not the file name or the file data), and updates with the change of them. The calculated hash is not case sensitive to the data. They look like MYSQL323 hashes, or really any 16-bit hash - but I can't be sure. Unfortunately I have no idea how to cross reference these with the actual tracks (preferrably their file paths). If you have an idea how they are sourced or created, please do let me know! It would be information that would make this tool a lot simpler!
+
+Rating values:
+There are 6 possible values that can be interpreted from the 4 byte integer. Each has a range of 42 (though not exactly, since 255 / 6 is 42.5). The value that is exported when using the XML export option is in the middle of the range.
+
+Rating | Exported as | Import
+--- | --- | ---
+- | -1 | 0-42 
+1 | 63 | 43-85
+2 | 106 | 86-127
+3 | 149 | 128-170
+4 | 191 | 171-213
+5 | 234 | 214-255
