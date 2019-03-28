@@ -162,9 +162,10 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "MatchConfirmPrompt";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Track unmatched";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MatchManualPrompt_FormClosing);
+            this.Load += new System.EventHandler(this.MatchConfirmPrompt_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

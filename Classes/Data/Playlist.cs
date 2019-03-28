@@ -45,6 +45,15 @@ namespace if2ktool
                                              .Replace("\t", string.Empty);
             }
 
+            if (IsSmartPlaylist)
+            {
+                //iTunes.SmartPlaylistParser.Parse(smartInfo, smartCriteria);
+
+                //byte[] info = Convert.FromBase64String(smartInfo);
+                //byte[] criteria = Convert.FromBase64String(smartCriteria);
+                //Banshee.Plugins.iTunesImporter.SmartPlaylistParser.Parse(info, criteria);
+            }
+
             // Get array element under playlist dict
             var array = element.Element("array");
 

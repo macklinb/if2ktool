@@ -58,7 +58,10 @@
             this.actionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pauseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cancelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolsGenerateJsonLookup = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSearchMode = new System.Windows.Forms.ToolStripComboBox();
+            this.toolStripSearchBox = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSearchLabel = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mapToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.writeTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -69,27 +72,14 @@
             this.treeViewEntries = new System.Windows.Forms.TreeView();
             this.dgvEntries = new System.Windows.Forms.DataGridView();
             this.colChecked = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.colWroteTags = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTrackId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSortOrder = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colFileName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colMappedFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTrackNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTrackTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colAlbumArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colAlbum = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDateAdded = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colLastPlayed = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colPlayCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colRating = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.splitContainerVertical = new System.Windows.Forms.SplitContainer();
             this.splitContainerHorizontal = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.dtpLastPlayedValue = new if2ktool.DateTimePickerAlt();
+            this.mappedPathPanel = new System.Windows.Forms.Panel();
+            this.btnMappedPath = new System.Windows.Forms.Button();
+            this.txtMappedFilePathValue = new System.Windows.Forms.TextBox();
             this.lblFilePathValue = new System.Windows.Forms.Label();
-            this.dtpDateAddedValue = new if2ktool.DateTimePickerAlt();
             this.cbRatingValue = new System.Windows.Forms.ComboBox();
             this.lblLookupIndexValue = new System.Windows.Forms.Label();
             this.lblFileNameValue = new System.Windows.Forms.Label();
@@ -113,7 +103,6 @@
             this.lblFileName = new System.Windows.Forms.Label();
             this.lblFilePath = new System.Windows.Forms.Label();
             this.lblMappedFilePath = new System.Windows.Forms.Label();
-            this.txtMappedFilePathValue = new System.Windows.Forms.TextBox();
             this.txtPlayCountValue = new System.Windows.Forms.TextBox();
             this.lblSelectedCount = new System.Windows.Forms.Label();
             this.columnHeaderContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -135,6 +124,26 @@
             this.dataGridViewTextBoxColumn12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn15 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dataGridViewTextBoxColumn16 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dtpLastPlayedValue = new if2ktool.DateTimePickerAlt();
+            this.dtpDateAddedValue = new if2ktool.DateTimePickerAlt();
+            this.colWroteTags = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTrackId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colSortOrder = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colFileName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colMappedFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTrackNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTrackTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colAlbumArtist = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colAlbum = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colKind = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colGenre = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colDateAdded = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colLastPlayed = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPlayCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.menuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvEntries)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerVertical)).BeginInit();
@@ -146,6 +155,7 @@
             this.splitContainerHorizontal.Panel2.SuspendLayout();
             this.splitContainerHorizontal.SuspendLayout();
             this.tableLayoutPanel.SuspendLayout();
+            this.mappedPathPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.entryBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
@@ -156,10 +166,14 @@
             this.editToolStripMenuItem,
             this.viewToolStripMenuItem,
             this.actionsToolStripMenuItem,
-            this.toolsGenerateJsonLookup});
+            this.toolStripSearchMode,
+            this.toolStripSearchBox,
+            this.toolStripSearchLabel,
+            this.toolsToolStripMenuItem});
+            this.menuStrip.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(784, 24);
+            this.menuStrip.Size = new System.Drawing.Size(784, 27);
             this.menuStrip.TabIndex = 0;
             this.menuStrip.Text = "menuStrip";
             // 
@@ -173,7 +187,7 @@
             this.exportMtsToolStripMenuItem,
             this.exportPlaylistsToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 23);
             this.fileToolStripMenuItem.Text = "File";
             this.fileToolStripMenuItem.DropDownOpening += new System.EventHandler(this.fileToolStripMenuItem_DropDownOpening);
             // 
@@ -232,7 +246,7 @@
             this.editToolStripSeparator3,
             this.preferencesToolStripMenuItem});
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 23);
             this.editToolStripMenuItem.Text = "Edit";
             this.editToolStripMenuItem.DropDownOpening += new System.EventHandler(this.editToolStripMenuItem_DropDownOpening);
             // 
@@ -320,7 +334,7 @@
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.showConsoleToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
-            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 23);
             this.viewToolStripMenuItem.Text = "View";
             this.viewToolStripMenuItem.DropDownOpening += new System.EventHandler(this.viewToolStripMenuItem_DropDownOpening);
             // 
@@ -338,7 +352,7 @@
             this.pauseToolStripMenuItem,
             this.cancelToolStripMenuItem});
             this.actionsToolStripMenuItem.Name = "actionsToolStripMenuItem";
-            this.actionsToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
+            this.actionsToolStripMenuItem.Size = new System.Drawing.Size(59, 23);
             this.actionsToolStripMenuItem.Text = "Actions";
             this.actionsToolStripMenuItem.DropDownOpening += new System.EventHandler(this.actionsToolStripMenuItem_DropDownOpening);
             // 
@@ -356,9 +370,41 @@
             this.cancelToolStripMenuItem.Text = "Cancel";
             this.cancelToolStripMenuItem.Click += new System.EventHandler(this.cancelToolStripMenuItem_Click);
             // 
-            // toolsGenerateJsonLookup
+            // toolStripSearchMode
             // 
-            this.toolsGenerateJsonLookup.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripSearchMode.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripSearchMode.BackColor = System.Drawing.SystemColors.Control;
+            this.toolStripSearchMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.toolStripSearchMode.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.toolStripSearchMode.Items.AddRange(new object[] {
+            "Starts with",
+            "Ends with",
+            "Contains"});
+            this.toolStripSearchMode.Name = "toolStripSearchMode";
+            this.toolStripSearchMode.Size = new System.Drawing.Size(90, 23);
+            this.toolStripSearchMode.SelectedIndexChanged += new System.EventHandler(this.toolStripSearchMode_SelectedIndexChanged);
+            // 
+            // toolStripSearchBox
+            // 
+            this.toolStripSearchBox.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripSearchBox.Name = "toolStripSearchBox";
+            this.toolStripSearchBox.Size = new System.Drawing.Size(100, 23);
+            this.toolStripSearchBox.Text = "Search...";
+            this.toolStripSearchBox.Enter += new System.EventHandler(this.toolStripSearchBox_Enter);
+            this.toolStripSearchBox.Leave += new System.EventHandler(this.toolStripSearchBox_Leave);
+            this.toolStripSearchBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.toolStripSearchBox_KeyDown);
+            this.toolStripSearchBox.TextChanged += new System.EventHandler(this.toolStripSearchBox_TextChanged);
+            // 
+            // toolStripSearchLabel
+            // 
+            this.toolStripSearchLabel.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripSearchLabel.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripSearchLabel.Name = "toolStripSearchLabel";
+            this.toolStripSearchLabel.Size = new System.Drawing.Size(12, 23);
+            // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mapToolStripMenuItem,
             this.toolsToolStripSeparator1,
             this.writeTagsToolStripMenuItem,
@@ -366,10 +412,10 @@
             this.toolsToolStripSeperator2,
             this.generateJSONLookupToolStripMenuItem,
             this.generateReplicateLibraryStructureToolStripMenuItem});
-            this.toolsGenerateJsonLookup.Name = "toolsGenerateJsonLookup";
-            this.toolsGenerateJsonLookup.Size = new System.Drawing.Size(47, 20);
-            this.toolsGenerateJsonLookup.Text = "Tools";
-            this.toolsGenerateJsonLookup.DropDownOpening += new System.EventHandler(this.toolsToolStripMenuItem_DropDownOpening);
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 23);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            this.toolsToolStripMenuItem.DropDownOpening += new System.EventHandler(this.toolsToolStripMenuItem_DropDownOpening);
             // 
             // mapToolStripMenuItem
             // 
@@ -448,6 +494,8 @@
             this.colArtist,
             this.colAlbumArtist,
             this.colAlbum,
+            this.colKind,
+            this.colGenre,
             this.colLocation,
             this.colDateAdded,
             this.colLastPlayed,
@@ -472,6 +520,7 @@
             this.dgvEntries.Scroll += new System.Windows.Forms.ScrollEventHandler(this.dgvEntries_Scroll);
             this.dgvEntries.SelectionChanged += new System.EventHandler(this.dgvEntries_SelectionChanged);
             this.dgvEntries.Sorted += new System.EventHandler(this.dgvEntries_Sorted);
+            this.dgvEntries.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvEntries_KeyDown);
             this.dgvEntries.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dgvEntries_KeyUp);
             // 
             // colChecked
@@ -485,133 +534,6 @@
             this.colChecked.ToolTipText = "Checked\nThis column is used to assist in the selection\nof items to be processed e" +
     "ither in matching/mapping or writing tags.";
             this.colChecked.Width = 30;
-            // 
-            // colWroteTags
-            // 
-            this.colWroteTags.DataPropertyName = "wroteTagsDisplay";
-            this.colWroteTags.HeaderText = "";
-            this.colWroteTags.MinimumWidth = 24;
-            this.colWroteTags.Name = "colWroteTags";
-            this.colWroteTags.ReadOnly = true;
-            this.colWroteTags.ToolTipText = "Wrote tags?\nHas this file had the iTunes tags\nfrom its entry written to it?";
-            this.colWroteTags.Width = 30;
-            // 
-            // colTrackId
-            // 
-            this.colTrackId.DataPropertyName = "trackId";
-            this.colTrackId.HeaderText = "ID";
-            this.colTrackId.Name = "colTrackId";
-            this.colTrackId.ReadOnly = true;
-            this.colTrackId.Width = 40;
-            // 
-            // colSortOrder
-            // 
-            this.colSortOrder.DataPropertyName = "lookupIndex";
-            this.colSortOrder.HeaderText = "Sort Order";
-            this.colSortOrder.MinimumWidth = 65;
-            this.colSortOrder.Name = "colSortOrder";
-            this.colSortOrder.ReadOnly = true;
-            this.colSortOrder.Visible = false;
-            this.colSortOrder.Width = 65;
-            // 
-            // colFileName
-            // 
-            this.colFileName.DataPropertyName = "fileName";
-            this.colFileName.HeaderText = "File Name";
-            this.colFileName.Name = "colFileName";
-            this.colFileName.ReadOnly = true;
-            this.colFileName.Width = 256;
-            // 
-            // colMappedFilePath
-            // 
-            this.colMappedFilePath.DataPropertyName = "mappedFilePath";
-            this.colMappedFilePath.HeaderText = "Mapped Path";
-            this.colMappedFilePath.Name = "colMappedFilePath";
-            this.colMappedFilePath.ReadOnly = true;
-            this.colMappedFilePath.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colMappedFilePath.ToolTipText = "File path that this entry has been mapped to";
-            this.colMappedFilePath.Width = 200;
-            // 
-            // colTrackNumber
-            // 
-            this.colTrackNumber.DataPropertyName = "trackNumber";
-            this.colTrackNumber.HeaderText = "#";
-            this.colTrackNumber.MinimumWidth = 24;
-            this.colTrackNumber.Name = "colTrackNumber";
-            this.colTrackNumber.ReadOnly = true;
-            this.colTrackNumber.Visible = false;
-            this.colTrackNumber.Width = 24;
-            // 
-            // colTrackTitle
-            // 
-            this.colTrackTitle.DataPropertyName = "trackTitle";
-            this.colTrackTitle.HeaderText = "Title";
-            this.colTrackTitle.Name = "colTrackTitle";
-            this.colTrackTitle.ReadOnly = true;
-            this.colTrackTitle.Visible = false;
-            this.colTrackTitle.Width = 180;
-            // 
-            // colArtist
-            // 
-            this.colArtist.DataPropertyName = "artist";
-            this.colArtist.HeaderText = "Artist";
-            this.colArtist.Name = "colArtist";
-            this.colArtist.ReadOnly = true;
-            this.colArtist.Visible = false;
-            this.colArtist.Width = 120;
-            // 
-            // colAlbumArtist
-            // 
-            this.colAlbumArtist.DataPropertyName = "albumArtist";
-            this.colAlbumArtist.HeaderText = "Album Artist";
-            this.colAlbumArtist.Name = "colAlbumArtist";
-            this.colAlbumArtist.ReadOnly = true;
-            this.colAlbumArtist.Visible = false;
-            this.colAlbumArtist.Width = 120;
-            // 
-            // colAlbum
-            // 
-            this.colAlbum.DataPropertyName = "album";
-            this.colAlbum.HeaderText = "Album";
-            this.colAlbum.Name = "colAlbum";
-            this.colAlbum.ReadOnly = true;
-            this.colAlbum.Visible = false;
-            this.colAlbum.Width = 120;
-            // 
-            // colLocation
-            // 
-            this.colLocation.DataPropertyName = "location";
-            this.colLocation.HeaderText = "Original location";
-            this.colLocation.Name = "colLocation";
-            this.colLocation.ReadOnly = true;
-            this.colLocation.ToolTipText = "Original \"Location\" field for this entry.\nThis is the file path to the file used " +
-    "by iTunes";
-            // 
-            // colDateAdded
-            // 
-            this.colDateAdded.DataPropertyName = "dateAdded";
-            this.colDateAdded.HeaderText = "Date Added";
-            this.colDateAdded.Name = "colDateAdded";
-            this.colDateAdded.ReadOnly = true;
-            this.colDateAdded.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colDateAdded.Width = 115;
-            // 
-            // colLastPlayed
-            // 
-            this.colLastPlayed.DataPropertyName = "lastPlayed";
-            this.colLastPlayed.HeaderText = "Last Played";
-            this.colLastPlayed.Name = "colLastPlayed";
-            this.colLastPlayed.ReadOnly = true;
-            this.colLastPlayed.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.colLastPlayed.Width = 115;
-            // 
-            // colPlayCount
-            // 
-            this.colPlayCount.DataPropertyName = "playCount";
-            this.colPlayCount.HeaderText = "Plays";
-            this.colPlayCount.Name = "colPlayCount";
-            this.colPlayCount.ReadOnly = true;
-            this.colPlayCount.Width = 40;
             // 
             // colRating
             // 
@@ -681,6 +603,7 @@
             this.tableLayoutPanel.ColumnCount = 2;
             this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel.Controls.Add(this.mappedPathPanel, 1, 9);
             this.tableLayoutPanel.Controls.Add(this.dtpLastPlayedValue, 1, 12);
             this.tableLayoutPanel.Controls.Add(this.lblFilePathValue, 1, 7);
             this.tableLayoutPanel.Controls.Add(this.dtpDateAddedValue, 1, 11);
@@ -707,7 +630,6 @@
             this.tableLayoutPanel.Controls.Add(this.lblFileName, 0, 6);
             this.tableLayoutPanel.Controls.Add(this.lblFilePath, 0, 7);
             this.tableLayoutPanel.Controls.Add(this.lblMappedFilePath, 0, 9);
-            this.tableLayoutPanel.Controls.Add(this.txtMappedFilePathValue, 1, 9);
             this.tableLayoutPanel.Controls.Add(this.txtPlayCountValue, 1, 13);
             this.tableLayoutPanel.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
             this.tableLayoutPanel.Location = new System.Drawing.Point(0, 0);
@@ -734,22 +656,47 @@
             this.tableLayoutPanel.TabIndex = 6;
             this.tableLayoutPanel.Resize += new System.EventHandler(this.tableLayoutPanel_Resize);
             // 
-            // dtpLastPlayedValue
+            // mappedPathPanel
             // 
-            this.dtpLastPlayedValue.CheckedLast = false;
-            this.dtpLastPlayedValue.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm tt";
-            this.dtpLastPlayedValue.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dtpLastPlayedValue.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpLastPlayedValue.Location = new System.Drawing.Point(83, 234);
-            this.dtpLastPlayedValue.Margin = new System.Windows.Forms.Padding(0);
-            this.dtpLastPlayedValue.Name = "dtpLastPlayedValue";
-            this.dtpLastPlayedValue.ShowCheckBox = true;
-            this.dtpLastPlayedValue.Size = new System.Drawing.Size(171, 20);
-            this.dtpLastPlayedValue.TabIndex = 4;
-            this.dtpLastPlayedValue.ValueChangedSpecial += new System.EventHandler(this.dtpProperty_ValueChangedSpecial);
-            this.dtpLastPlayedValue.Enter += new System.EventHandler(this.dtpProperty_Enter);
-            this.dtpLastPlayedValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dtpProperty_KeyDown);
-            this.dtpLastPlayedValue.Leave += new System.EventHandler(this.dtpProperty_Leave);
+            this.mappedPathPanel.BackColor = System.Drawing.SystemColors.Window;
+            this.mappedPathPanel.Controls.Add(this.btnMappedPath);
+            this.mappedPathPanel.Controls.Add(this.txtMappedFilePathValue);
+            this.mappedPathPanel.Location = new System.Drawing.Point(83, 172);
+            this.mappedPathPanel.Margin = new System.Windows.Forms.Padding(0);
+            this.mappedPathPanel.Name = "mappedPathPanel";
+            this.mappedPathPanel.Size = new System.Drawing.Size(171, 19);
+            this.mappedPathPanel.TabIndex = 3;
+            // 
+            // btnMappedPath
+            // 
+            this.btnMappedPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnMappedPath.FlatAppearance.BorderSize = 0;
+            this.btnMappedPath.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            this.btnMappedPath.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnMappedPath.Image = ((System.Drawing.Image)(resources.GetObject("btnMappedPath.Image")));
+            this.btnMappedPath.Location = new System.Drawing.Point(152, 0);
+            this.btnMappedPath.Name = "btnMappedPath";
+            this.btnMappedPath.Size = new System.Drawing.Size(19, 19);
+            this.btnMappedPath.TabIndex = 1;
+            this.btnMappedPath.UseVisualStyleBackColor = true;
+            this.btnMappedPath.Click += new System.EventHandler(this.btnMappedPath_Click);
+            // 
+            // txtMappedFilePathValue
+            // 
+            this.txtMappedFilePathValue.AcceptsReturn = true;
+            this.txtMappedFilePathValue.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtMappedFilePathValue.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.txtMappedFilePathValue.Location = new System.Drawing.Point(3, 3);
+            this.txtMappedFilePathValue.Margin = new System.Windows.Forms.Padding(0);
+            this.txtMappedFilePathValue.Name = "txtMappedFilePathValue";
+            this.txtMappedFilePathValue.Size = new System.Drawing.Size(146, 13);
+            this.txtMappedFilePathValue.TabIndex = 1;
+            this.txtMappedFilePathValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtMappedFilePathValue_KeyDown);
+            this.txtMappedFilePathValue.Leave += new System.EventHandler(this.txtMappedFilePathValue_Leave);
+            this.txtMappedFilePathValue.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.txtMappedFilePathValue_MouseDoubleClick);
             // 
             // lblFilePathValue
             // 
@@ -764,23 +711,6 @@
             this.lblFilePathValue.TabIndex = 31;
             this.lblFilePathValue.Text = "-";
             this.lblFilePathValue.UseMnemonic = false;
-            // 
-            // dtpDateAddedValue
-            // 
-            this.dtpDateAddedValue.CheckedLast = false;
-            this.dtpDateAddedValue.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm tt";
-            this.dtpDateAddedValue.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dtpDateAddedValue.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpDateAddedValue.Location = new System.Drawing.Point(83, 213);
-            this.dtpDateAddedValue.Margin = new System.Windows.Forms.Padding(0);
-            this.dtpDateAddedValue.Name = "dtpDateAddedValue";
-            this.dtpDateAddedValue.ShowCheckBox = true;
-            this.dtpDateAddedValue.Size = new System.Drawing.Size(171, 20);
-            this.dtpDateAddedValue.TabIndex = 3;
-            this.dtpDateAddedValue.ValueChangedSpecial += new System.EventHandler(this.dtpProperty_ValueChangedSpecial);
-            this.dtpDateAddedValue.Enter += new System.EventHandler(this.dtpProperty_Enter);
-            this.dtpDateAddedValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dtpProperty_KeyDown);
-            this.dtpDateAddedValue.Leave += new System.EventHandler(this.dtpProperty_Leave);
             // 
             // cbRatingValue
             // 
@@ -1064,19 +994,6 @@
             this.lblMappedFilePath.TabIndex = 0;
             this.lblMappedFilePath.Text = "Mapped Path:";
             // 
-            // txtMappedFilePathValue
-            // 
-            this.txtMappedFilePathValue.AcceptsReturn = true;
-            this.txtMappedFilePathValue.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtMappedFilePathValue.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtMappedFilePathValue.Location = new System.Drawing.Point(86, 175);
-            this.txtMappedFilePathValue.Name = "txtMappedFilePathValue";
-            this.txtMappedFilePathValue.Size = new System.Drawing.Size(165, 13);
-            this.txtMappedFilePathValue.TabIndex = 1;
-            this.txtMappedFilePathValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtMappedFilePathValue_KeyDown);
-            this.txtMappedFilePathValue.Leave += new System.EventHandler(this.txtMappedFilePathValue_Leave);
-            this.txtMappedFilePathValue.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.txtMappedFilePathValue_MouseDoubleClick);
-            // 
             // txtPlayCountValue
             // 
             this.txtPlayCountValue.BorderStyle = System.Windows.Forms.BorderStyle.None;
@@ -1236,6 +1153,7 @@
             this.dataGridViewTextBoxColumn11.ReadOnly = true;
             this.dataGridViewTextBoxColumn11.ToolTipText = "Original \"Location\" field for this entry.\nThis is the file path to the file used " +
     "by iTunes";
+            this.dataGridViewTextBoxColumn11.Visible = false;
             // 
             // dataGridViewTextBoxColumn12
             // 
@@ -1244,6 +1162,7 @@
             this.dataGridViewTextBoxColumn12.Name = "dataGridViewTextBoxColumn12";
             this.dataGridViewTextBoxColumn12.ReadOnly = true;
             this.dataGridViewTextBoxColumn12.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewTextBoxColumn12.Visible = false;
             this.dataGridViewTextBoxColumn12.Width = 115;
             // 
             // dataGridViewTextBoxColumn13
@@ -1253,6 +1172,8 @@
             this.dataGridViewTextBoxColumn13.Name = "dataGridViewTextBoxColumn13";
             this.dataGridViewTextBoxColumn13.ReadOnly = true;
             this.dataGridViewTextBoxColumn13.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewTextBoxColumn13.ToolTipText = "Original \"Location\" field for this entry.\nThis is the file path to the file used " +
+    "by iTunes";
             this.dataGridViewTextBoxColumn13.Width = 115;
             // 
             // dataGridViewTextBoxColumn14
@@ -1261,7 +1182,202 @@
             this.dataGridViewTextBoxColumn14.HeaderText = "Plays";
             this.dataGridViewTextBoxColumn14.Name = "dataGridViewTextBoxColumn14";
             this.dataGridViewTextBoxColumn14.ReadOnly = true;
+            this.dataGridViewTextBoxColumn14.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridViewTextBoxColumn14.Width = 40;
+            // 
+            // dataGridViewTextBoxColumn15
+            // 
+            this.dataGridViewTextBoxColumn15.DataPropertyName = "lastPlayed";
+            this.dataGridViewTextBoxColumn15.HeaderText = "Last Played";
+            this.dataGridViewTextBoxColumn15.Name = "dataGridViewTextBoxColumn15";
+            this.dataGridViewTextBoxColumn15.ReadOnly = true;
+            this.dataGridViewTextBoxColumn15.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.dataGridViewTextBoxColumn15.Width = 115;
+            // 
+            // dataGridViewTextBoxColumn16
+            // 
+            this.dataGridViewTextBoxColumn16.DataPropertyName = "playCount";
+            this.dataGridViewTextBoxColumn16.HeaderText = "Plays";
+            this.dataGridViewTextBoxColumn16.Name = "dataGridViewTextBoxColumn16";
+            this.dataGridViewTextBoxColumn16.ReadOnly = true;
+            this.dataGridViewTextBoxColumn16.Width = 40;
+            // 
+            // dtpLastPlayedValue
+            // 
+            this.dtpLastPlayedValue.CheckedLast = false;
+            this.dtpLastPlayedValue.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm tt";
+            this.dtpLastPlayedValue.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dtpLastPlayedValue.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpLastPlayedValue.Location = new System.Drawing.Point(83, 234);
+            this.dtpLastPlayedValue.Margin = new System.Windows.Forms.Padding(0);
+            this.dtpLastPlayedValue.Name = "dtpLastPlayedValue";
+            this.dtpLastPlayedValue.ShowCheckBox = true;
+            this.dtpLastPlayedValue.Size = new System.Drawing.Size(171, 20);
+            this.dtpLastPlayedValue.TabIndex = 4;
+            this.dtpLastPlayedValue.ValueChangedSpecial += new System.EventHandler(this.dtpProperty_ValueChangedSpecial);
+            this.dtpLastPlayedValue.Enter += new System.EventHandler(this.dtpProperty_Enter);
+            this.dtpLastPlayedValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dtpProperty_KeyDown);
+            this.dtpLastPlayedValue.Leave += new System.EventHandler(this.dtpProperty_Leave);
+            // 
+            // dtpDateAddedValue
+            // 
+            this.dtpDateAddedValue.CheckedLast = false;
+            this.dtpDateAddedValue.CustomFormat = "MM\'/\'dd\'/\'yyyy hh\':\'mm tt";
+            this.dtpDateAddedValue.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dtpDateAddedValue.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpDateAddedValue.Location = new System.Drawing.Point(83, 213);
+            this.dtpDateAddedValue.Margin = new System.Windows.Forms.Padding(0);
+            this.dtpDateAddedValue.Name = "dtpDateAddedValue";
+            this.dtpDateAddedValue.ShowCheckBox = true;
+            this.dtpDateAddedValue.Size = new System.Drawing.Size(171, 20);
+            this.dtpDateAddedValue.TabIndex = 3;
+            this.dtpDateAddedValue.ValueChangedSpecial += new System.EventHandler(this.dtpProperty_ValueChangedSpecial);
+            this.dtpDateAddedValue.Enter += new System.EventHandler(this.dtpProperty_Enter);
+            this.dtpDateAddedValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dtpProperty_KeyDown);
+            this.dtpDateAddedValue.Leave += new System.EventHandler(this.dtpProperty_Leave);
+            // 
+            // colWroteTags
+            // 
+            this.colWroteTags.DataPropertyName = "wroteTagsDisplay";
+            this.colWroteTags.HeaderText = "";
+            this.colWroteTags.MinimumWidth = 24;
+            this.colWroteTags.Name = "colWroteTags";
+            this.colWroteTags.ReadOnly = true;
+            this.colWroteTags.ToolTipText = "Wrote tags?\nHas this file had the iTunes tags\nfrom its entry written to it?";
+            this.colWroteTags.Width = 30;
+            // 
+            // colTrackId
+            // 
+            this.colTrackId.DataPropertyName = "trackId";
+            this.colTrackId.HeaderText = "ID";
+            this.colTrackId.Name = "colTrackId";
+            this.colTrackId.ReadOnly = true;
+            this.colTrackId.Width = 40;
+            // 
+            // colSortOrder
+            // 
+            this.colSortOrder.DataPropertyName = "lookupIndex";
+            this.colSortOrder.HeaderText = "Sort Order";
+            this.colSortOrder.MinimumWidth = 65;
+            this.colSortOrder.Name = "colSortOrder";
+            this.colSortOrder.ReadOnly = true;
+            this.colSortOrder.Visible = false;
+            this.colSortOrder.Width = 65;
+            // 
+            // colFileName
+            // 
+            this.colFileName.DataPropertyName = "fileName";
+            this.colFileName.HeaderText = "File Name";
+            this.colFileName.Name = "colFileName";
+            this.colFileName.ReadOnly = true;
+            this.colFileName.Width = 256;
+            // 
+            // colMappedFilePath
+            // 
+            this.colMappedFilePath.DataPropertyName = "mappedFilePath";
+            this.colMappedFilePath.HeaderText = "Mapped Path";
+            this.colMappedFilePath.Name = "colMappedFilePath";
+            this.colMappedFilePath.ReadOnly = true;
+            this.colMappedFilePath.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colMappedFilePath.ToolTipText = "File path that this entry has been mapped to";
+            this.colMappedFilePath.Width = 200;
+            // 
+            // colTrackNumber
+            // 
+            this.colTrackNumber.DataPropertyName = "trackNumberPadded";
+            this.colTrackNumber.HeaderText = "#";
+            this.colTrackNumber.MinimumWidth = 24;
+            this.colTrackNumber.Name = "colTrackNumber";
+            this.colTrackNumber.ReadOnly = true;
+            this.colTrackNumber.Visible = false;
+            this.colTrackNumber.Width = 24;
+            // 
+            // colTrackTitle
+            // 
+            this.colTrackTitle.DataPropertyName = "trackTitle";
+            this.colTrackTitle.HeaderText = "Title";
+            this.colTrackTitle.Name = "colTrackTitle";
+            this.colTrackTitle.ReadOnly = true;
+            this.colTrackTitle.Visible = false;
+            this.colTrackTitle.Width = 220;
+            // 
+            // colArtist
+            // 
+            this.colArtist.DataPropertyName = "artist";
+            this.colArtist.HeaderText = "Artist";
+            this.colArtist.Name = "colArtist";
+            this.colArtist.ReadOnly = true;
+            this.colArtist.Visible = false;
+            this.colArtist.Width = 120;
+            // 
+            // colAlbumArtist
+            // 
+            this.colAlbumArtist.DataPropertyName = "albumArtist";
+            this.colAlbumArtist.HeaderText = "Album Artist";
+            this.colAlbumArtist.Name = "colAlbumArtist";
+            this.colAlbumArtist.ReadOnly = true;
+            this.colAlbumArtist.Visible = false;
+            this.colAlbumArtist.Width = 120;
+            // 
+            // colAlbum
+            // 
+            this.colAlbum.DataPropertyName = "album";
+            this.colAlbum.HeaderText = "Album";
+            this.colAlbum.Name = "colAlbum";
+            this.colAlbum.ReadOnly = true;
+            this.colAlbum.Visible = false;
+            this.colAlbum.Width = 120;
+            // 
+            // colKind
+            // 
+            this.colKind.DataPropertyName = "kind";
+            this.colKind.HeaderText = "Kind";
+            this.colKind.Name = "colKind";
+            this.colKind.ReadOnly = true;
+            this.colKind.Visible = false;
+            // 
+            // colGenre
+            // 
+            this.colGenre.DataPropertyName = "genre";
+            this.colGenre.HeaderText = "Genre";
+            this.colGenre.Name = "colGenre";
+            this.colGenre.ReadOnly = true;
+            this.colGenre.Visible = false;
+            // 
+            // colLocation
+            // 
+            this.colLocation.DataPropertyName = "location";
+            this.colLocation.HeaderText = "Original location";
+            this.colLocation.Name = "colLocation";
+            this.colLocation.ReadOnly = true;
+            this.colLocation.ToolTipText = "Original \"Location\" field for this entry.\nThis is the file path to the file used " +
+    "by iTunes";
+            // 
+            // colDateAdded
+            // 
+            this.colDateAdded.DataPropertyName = "dateAdded";
+            this.colDateAdded.HeaderText = "Date Added";
+            this.colDateAdded.Name = "colDateAdded";
+            this.colDateAdded.ReadOnly = true;
+            this.colDateAdded.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colDateAdded.Width = 115;
+            // 
+            // colLastPlayed
+            // 
+            this.colLastPlayed.DataPropertyName = "lastPlayed";
+            this.colLastPlayed.HeaderText = "Last Played";
+            this.colLastPlayed.Name = "colLastPlayed";
+            this.colLastPlayed.ReadOnly = true;
+            this.colLastPlayed.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.colLastPlayed.Width = 115;
+            // 
+            // colPlayCount
+            // 
+            this.colPlayCount.DataPropertyName = "playCount";
+            this.colPlayCount.HeaderText = "Plays";
+            this.colPlayCount.Name = "colPlayCount";
+            this.colPlayCount.ReadOnly = true;
+            this.colPlayCount.Width = 40;
             // 
             // Main
             // 
@@ -1276,7 +1392,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip;
             this.Name = "Main";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "if2ktool";
             this.menuStrip.ResumeLayout(false);
             this.menuStrip.PerformLayout();
@@ -1291,6 +1406,8 @@
             this.splitContainerHorizontal.ResumeLayout(false);
             this.tableLayoutPanel.ResumeLayout(false);
             this.tableLayoutPanel.PerformLayout();
+            this.mappedPathPanel.ResumeLayout(false);
+            this.mappedPathPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.entryBindingSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -1300,7 +1417,7 @@
         #endregion
 
         private System.Windows.Forms.MenuStrip menuStrip;
-        private System.Windows.Forms.ToolStripMenuItem toolsGenerateJsonLookup;
+        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.TreeView treeViewEntries;
         private System.Windows.Forms.SplitContainer splitContainerVertical;
         private System.Windows.Forms.ContextMenuStrip columnHeaderContextMenu;
@@ -1353,22 +1470,6 @@
         private System.Windows.Forms.TextBox txtMappedFilePathValue;
         private System.Windows.Forms.ComboBox cbRatingValue;
         private System.Windows.Forms.Label lblFilePathValue;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn colChecked;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colWroteTags;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colSortOrder;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colFileName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colMappedFilePath;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackNumber;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackTitle;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colArtist;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colAlbumArtist;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colAlbum;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colLocation;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colDateAdded;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colLastPlayed;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colPlayCount;
-        private System.Windows.Forms.DataGridViewComboBoxColumn colRating;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.TextBox txtPlayCountValue;
@@ -1403,5 +1504,30 @@
         private System.Windows.Forms.ToolStripMenuItem pauseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cancelToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem generateReplicateLibraryStructureToolStripMenuItem;
+        private System.Windows.Forms.ToolStripTextBox toolStripSearchBox;
+        private System.Windows.Forms.ToolStripComboBox toolStripSearchMode;
+        private System.Windows.Forms.ToolStripMenuItem toolStripSearchLabel;
+        private System.Windows.Forms.Panel mappedPathPanel;
+        private System.Windows.Forms.Button btnMappedPath;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colChecked;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colWroteTags;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colSortOrder;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colFileName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colMappedFilePath;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackNumber;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTrackTitle;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colArtist;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAlbumArtist;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAlbum;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colKind;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colGenre;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colLocation;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colDateAdded;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colLastPlayed;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPlayCount;
+        private System.Windows.Forms.DataGridViewComboBoxColumn colRating;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn15;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn16;
     }
 }

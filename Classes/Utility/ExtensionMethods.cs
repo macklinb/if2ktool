@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -35,6 +36,14 @@ namespace if2ktool
         public static void Invoke(this Control control, Action action)
         {
             control.Invoke((Delegate)action);
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool FlashWindow(IntPtr hwnd, bool bInvert);
+
+        public static void Flash(this Form form, bool flash)
+        {
+            FlashWindow(form.Handle, flash);
         }
     }
 }

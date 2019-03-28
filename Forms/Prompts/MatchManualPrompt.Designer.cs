@@ -43,6 +43,7 @@
             this.btnClear = new System.Windows.Forms.Button();
             this.txtFixedPath = new System.Windows.Forms.TextBox();
             this.grpFix = new System.Windows.Forms.GroupBox();
+            this.chkIgnoreAtPath = new System.Windows.Forms.CheckBox();
             this.grpFix.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -78,7 +79,7 @@
             this.btnConfirm.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.btnConfirm.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnConfirm.Location = new System.Drawing.Point(280, 291);
+            this.btnConfirm.Location = new System.Drawing.Point(280, 339);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(75, 23);
             this.btnConfirm.TabIndex = 9;
@@ -91,7 +92,7 @@
             this.btnAbort.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAbort.DialogResult = System.Windows.Forms.DialogResult.Abort;
-            this.btnAbort.Location = new System.Drawing.Point(12, 291);
+            this.btnAbort.Location = new System.Drawing.Point(12, 339);
             this.btnAbort.Name = "btnAbort";
             this.btnAbort.Size = new System.Drawing.Size(69, 23);
             this.btnAbort.TabIndex = 17;
@@ -104,7 +105,7 @@
             this.btnSkip.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSkip.DialogResult = System.Windows.Forms.DialogResult.Ignore;
-            this.btnSkip.Location = new System.Drawing.Point(199, 291);
+            this.btnSkip.Location = new System.Drawing.Point(199, 339);
             this.btnSkip.Name = "btnSkip";
             this.btnSkip.Size = new System.Drawing.Size(75, 23);
             this.btnSkip.TabIndex = 18;
@@ -127,7 +128,7 @@
             this.chkIgnoreAll.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.chkIgnoreAll.AutoSize = true;
-            this.chkIgnoreAll.Location = new System.Drawing.Point(87, 295);
+            this.chkIgnoreAll.Location = new System.Drawing.Point(21, 296);
             this.chkIgnoreAll.Name = "chkIgnoreAll";
             this.chkIgnoreAll.Size = new System.Drawing.Size(69, 17);
             this.chkIgnoreAll.TabIndex = 14;
@@ -194,19 +195,32 @@
             this.grpFix.Controls.Add(this.chkLookOther);
             this.grpFix.Controls.Add(this.chkPersistPath);
             this.grpFix.Controls.Add(this.btnFind);
-            this.grpFix.Location = new System.Drawing.Point(12, 150);
+            this.grpFix.Location = new System.Drawing.Point(12, 148);
             this.grpFix.Name = "grpFix";
             this.grpFix.Size = new System.Drawing.Size(343, 133);
             this.grpFix.TabIndex = 16;
             this.grpFix.TabStop = false;
             this.grpFix.Text = "Fix matched path";
             // 
+            // chkIgnoreAtPath
+            // 
+            this.chkIgnoreAtPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.chkIgnoreAtPath.AutoSize = true;
+            this.chkIgnoreAtPath.Location = new System.Drawing.Point(96, 296);
+            this.chkIgnoreAtPath.Name = "chkIgnoreAtPath";
+            this.chkIgnoreAtPath.Size = new System.Drawing.Size(196, 17);
+            this.chkIgnoreAtPath.TabIndex = 20;
+            this.chkIgnoreAtPath.Text = "Ignore other missing files at this path";
+            this.chkIgnoreAtPath.UseVisualStyleBackColor = true;
+            // 
             // MatchManualPrompt
             // 
             this.AcceptButton = this.btnConfirm;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(367, 326);
+            this.ClientSize = new System.Drawing.Size(367, 374);
+            this.Controls.Add(this.chkIgnoreAtPath);
             this.Controls.Add(this.lblMissingPath);
             this.Controls.Add(this.lblDescription);
             this.Controls.Add(this.btnSkip);
@@ -223,6 +237,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Track unmatched";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MatchManualPrompt_FormClosing);
+            this.Load += new System.EventHandler(this.MatchManualPrompt_Load);
             this.grpFix.ResumeLayout(false);
             this.grpFix.PerformLayout();
             this.ResumeLayout(false);
@@ -246,5 +261,6 @@
         private System.Windows.Forms.Button btnClear;
         private System.Windows.Forms.TextBox txtFixedPath;
         private System.Windows.Forms.GroupBox grpFix;
+        private System.Windows.Forms.CheckBox chkIgnoreAtPath;
     }
 }

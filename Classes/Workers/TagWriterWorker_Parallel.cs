@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Taskbar;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -9,11 +11,24 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using TagLib;
 
-namespace if2ktool_gui
+namespace if2ktool
 {
     // This is an experimental version of TagWriterWorker that writes tags in a ParallelFor.
-	// While it does boost the performance significantly, it thrashes the disk usage,
-	// and makes the code a lot more complicated than it needs to be.
+    // This improves performance on the first iteration of files, especially with more threads. For subsequent tasks, the processing will be (in some cases) 400% faster due to disk caching, and the effect is inverted - with more threads degrading the performance. Writing tags in parallel thrashes the disk IO, and so the performance depends on your disks random IO speeds.
+
+    /*
+    First process:
+	    No limit: 12:16
+	    4 threads max: 12:53
+	    1 thread max: 15:09
+	    No parallel: 15:16
+	
+    Subsequent processes (files cached):
+	    No limit: Average time = 3:16
+	    4 threads max: Average time = 2:52
+	    1 thread max: Average time = 2:50
+	    No parallel: Average time = 2:44
+    */
     
 	public static class TagWriterWorker
     {
@@ -26,7 +41,11 @@ namespace if2ktool_gui
         static bool isPaused;
 
         // Call  Reset() to pause, Set() to unpause
+        // Don't actually do this in code though, use the Paused property instead to keep in sync with isPaused
         static ManualResetEvent manualResetEvent;
+
+        // Dictionary of entries that occurred during the tagwriter
+        static ConcurrentDictionary<Entry, string> entryErrors;
 
         public static bool InProgress
         {
@@ -138,23 +157,32 @@ namespace if2ktool_gui
         private static void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             var args = (ProgressArgs)e.UserState;
-            mainForm.SetRowSelection(args.currentRowIndex, true);
+
+            if (Settings.Current.workerScrollWithSelection)
+                mainForm.SetRowSelection(args.currentRowIndex, true);
+
             mainForm.SetProgress(args.processed, args.count, args.timeMs);
+
+            // Set the progress value on the taskbar icon
+            TaskbarManager.Instance.SetProgressValue(args.processed, args.count);
         }
 
         // Called on the main thread when the worker is complete, or is cancelled
         private static void worker_Completed(object sender, RunWorkerCompletedEventArgs e)
         {
+            // Hide the progress state for the taskbar icon
+            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.NoProgress);
+
             // Reset the "Processed" flag on all rows
             foreach (var entry in args.rows.Select(x => x.DataBoundItem).Cast<Entry>().Where(x => x.processed))
                 entry.processed = false;
+
+            if (e.Cancelled) Debug.Log("--- CANCELLED ---");
 
             // Check to see if the worker was cancelled.
             // If we weren't already removing/reverting tags, ask the user if they want to revert the changes that were made
             if (e.Cancelled && lastArgs != null && !lastArgs.removeTags)
             {
-                Debug.Log("--- CANCELLED ---");
-
                 if (MessageBox.Show("Do you want to revert changes made to files, and erase the playback statistics tags that have already been written to files?", "Revert", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
                     var args = lastArgs;
@@ -170,7 +198,13 @@ namespace if2ktool_gui
                     return;
                 }
             }
-			
+
+            // If any errors occurred, show a dialogue containing the errors
+            if (entryErrors != null && entryErrors.Count > 0)
+            {
+                new TagWriterErrors(entryErrors).Show();
+            }
+
             args = lastArgs = null;
             Console.CursorVisible = true;
             mainForm.ShowProgress(false);
@@ -185,6 +219,7 @@ namespace if2ktool_gui
 
             int processed = 0;
             int count = args.rows.Count();
+            int rowIndex = 0;
 
             // Misc
             int success = 0;                // <- File was successfully written to
@@ -193,10 +228,6 @@ namespace if2ktool_gui
             int corruptFile = 0;            // <- File was corrupted (CorruptFileException)
             int ioError = 0;                // <- Error occured while loading the file (IOException)
             int otherError = 0;             // <- Another exception occurred
-
-            // Interval at which to report progress
-            //const int progressReportInterval = 100;
-            long progressReportCounter = 0;
 
             Debug.Log(string.Format("\nWriting tags for {0} files, using the following parameters:\nfilter:\t\t{1}\nskipDateAdded:\t{3}\nskipLastPlayed:\t{4}\nskipPlayCount:\t{5}\nskipRating:\t{6}\nremoveTags:\t{7}\n\nUse Ctrl-C to terminate", count, args.filter, args.filterNot, args.skipDateAdded, args.skipLastPlayed, args.skipPlayCount, args.skipRating, args.removeTags));
 
@@ -217,10 +248,21 @@ namespace if2ktool_gui
                 }
             }
 
+            // A dictionary of entries and errors that have occured 
+            entryErrors = new ConcurrentDictionary<Entry, string>();
+
+            // Progress report counter, gets set to the sw.ElapsedMilliseconds at every report progress interval
+            long progressReportCounter = 0;
+
+            // Start a new stopwatch
             var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            // Set the TaskbarProgressState
+            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
+
             Console.Write("\n\n");
 
-            void ReportProgress(int rowIndex)
+            void ReportProgress()
             {
                 // Report progress to main thread to update DataGridView selection
                 worker.ReportProgress(0, new ProgressArgs()
@@ -234,10 +276,13 @@ namespace if2ktool_gui
 			
             int lowestBreakIndex = 0;
 
-            Resume:
+            // Set up the ParallelOptions
+            var parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = Settings.Current.maxParallelThreads };
+
+        Resume:
 
             // Split the work into multiple parallel threads
-            ParallelLoopResult parallelLoopResult = Parallel.ForEach(args.rows.Skip(lowestBreakIndex), (row, parallelLoopState) =>
+            ParallelLoopResult parallelLoopResult = Parallel.ForEach(args.rows.Skip(lowestBreakIndex), parallelOptions, (row, parallelLoopState) =>
             {
                 // Firstly, do some processing stuffs that can only be done in the worker
 
@@ -261,8 +306,9 @@ namespace if2ktool_gui
                 // Only report progress every <progressReportInterval> milliseconds
                 if (Settings.Current.workerReportsProgress && sw.ElapsedMilliseconds - progressReportCounter > Settings.Current.workerReportProgressInterval)
                 {
+                    rowIndex = row.Index;
                     progressReportCounter = sw.ElapsedMilliseconds;
-                    ReportProgress(row.Index);
+                    ReportProgress();
                 }
 
                 // Fetch the DataBoundItem from the DataGridViewRow
@@ -275,6 +321,7 @@ namespace if2ktool_gui
                     // Create a new DebugStack
                     // We're unable to log from a parallel for, as the logs would be out of sync - and wouldn't be clustered together
                     // So instead of logging normally, logging within a Parallel is done to a DebugStack, which essentially just collects the logs so that we can fire them all at once
+                    // This is done here instead of in WriteTagsForRow, as that method has many exit points, therefore we would have to return a debugstack object from it anyway
                     var ds = new DebugStack();
 
                     // Write the tags for this Entry
@@ -308,8 +355,13 @@ namespace if2ktool_gui
                 Debug.Log("--- PAUSED ---");
                 sw.Stop();
 
-                // WaitOne until resumed
+                // Set the taskbar ProgressState to Paused
+                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
+
+                // Halt execution until unpaused (Reset)
                 manualResetEvent.WaitOne();
+
+				// If we're here, the operation was unpaused
 
 				// Handle cancelling while paused
 				if (worker.CancellationPending || e.Cancel)
@@ -317,14 +369,18 @@ namespace if2ktool_gui
                     e.Cancel = true;
                     return;
                 }
+
+				// Otherwise resume
 				else
                 {
                     Debug.Log("--- RESUMED ---");
                     sw.Start();
-                }
 
-                // Jump back up to Resume
-                goto Resume;
+                    TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
+
+                    // Jump back up to Resume
+                    goto Resume;
+                }
             }
 
             // Return if we cancelled
@@ -332,13 +388,18 @@ namespace if2ktool_gui
                 return;
 
             sw.Stop();
-
+			
             // Do final ReportProgress
-            ReportProgress(args.rows.Last().Index);
+            rowIndex = args.rows.Last().Index;
+            ReportProgress();
 
             string resultStr = string.Format("Took {0}ms ({1})\n {2} files were written to successfully\n {3} files could not be written to\n  {4} unsupported format\n  {5} corrupt\n  {6} IO errors\n  {7} unmapped\n  {8} other errors occurred", sw.ElapsedMilliseconds, TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds).ToString("m\\:ss"), success, unsupportedFormat + corruptFile + ioError + unmapped + otherError, unsupportedFormat, corruptFile, ioError, unmapped, otherError);
 
             Debug.Log("Done! " + resultStr);
+
+            mainForm.Invoke(() => mainForm.Flash(false));
+            System.Media.SystemSounds.Exclamation.Play();
+
             MessageBox.Show(resultStr, "Done!", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             if (args.removeTags)
@@ -351,12 +412,14 @@ namespace if2ktool_gui
         private static TagWriterReturnCode WriteTagsForRow(Entry entry, int processed, DebugStack ds)
         {
             TagLib.File file;
-            Debug.Log("#" + processed + " - " + entry.fileName);
+            ds.Log("#" + processed + " - " + entry.fileName);
 
             // Check if the entry is mapped to a file
             if (entry.isMapped == false)
             {
-                ds.LogWarning(" -> Entry is not matched to file");
+                string message = "Entry is not matched to file";
+                ds.LogWarning(" -> " + message);
+                entryErrors.TryAdd(entry, message);
                 return TagWriterReturnCode.Unmapped;
             }
 
@@ -369,47 +432,71 @@ namespace if2ktool_gui
             {
                 file = TagLib.File.Create(entry.mappedFilePath, isRetry ? ReadStyle.Average : ReadStyle.PictureLazy);
             }
-            catch (UnsupportedFormatException)
+			catch (Exception exception)
             {
-                ds.LogError(" -> File format with extension \"" + Path.GetExtension(entry.mappedFilePath) + "\" is unsupported");
-                return TagWriterReturnCode.UnsupportedFormat;
-            }
-            catch (CorruptFileException corruptEx)
-            {
-                ds.LogError(" -> File appears corrupt!");
-                return TagWriterReturnCode.CorruptFile;
-            }
-            catch (IOException ioex)
-            {
-                ds.LogError("\t-> An IO exception occured while loading the file \"" + entry.fileName + "\"");
+                var type = exception.GetType();
+                string errorMessage = "";
+                TagWriterReturnCode returnCode;
 
-                // Get the locking processes (if any)
-                var lockingProcesses = FileLockUtility.GetProcessesLockingFile(entry.mappedFilePath);
+                if (type == typeof(UnsupportedFormatException))
+                {
+                    errorMessage = "File format with extension \"" + Path.GetExtension(entry.mappedFilePath) + "\" is unsupported (" + exception.Message + ")";
+                    returnCode = TagWriterReturnCode.UnsupportedFormat;
+                }
+                else if (type == typeof(CorruptFileException))
+                {
+                    errorMessage = "File appears corrupt! " + exception.Message;
+                    returnCode = TagWriterReturnCode.CorruptFile;
+                }
+                else if (type == typeof(IOException))
+                {
+                    errorMessage = "An IO exception occured while loading the file! " + exception.Message;
 
-                // Log locking processes
-                if (lockingProcesses != null && lockingProcesses.Count > 0)
-                    ds.LogError("\tThe file appears to be locked by the process(es): " +
-                        string.Join(", ", lockingProcesses.Select(p => p.ProcessName).ToArray()));
+                    // Get the locking processes (if any)
+                    var lockingProcesses = FileLockUtility.GetProcessesLockingFile(entry.mappedFilePath);
 
-                return TagWriterReturnCode.IOEError;
+                    // Log locking processes
+                    if (lockingProcesses != null && lockingProcesses.Count > 0)
+                        Debug.LogError("\tThe file appears to be locked by the process(es): " +
+                            string.Join(", ", lockingProcesses.Select(p => p.ProcessName).ToArray()));
+
+                    returnCode = TagWriterReturnCode.IOEError;
+                }
+                else
+                {
+                    errorMessage = "An error occured while loading the file! " + exception.Message;
+                    returnCode = TagWriterReturnCode.OtherError;
+                }
+
+                ds.LogError(" -> " + errorMessage);
+                entryErrors.TryAdd(entry, errorMessage);
+                return returnCode;
             }
-            catch (Exception ex)
-            {
-                ds.LogError("\t-> An error occured while loading the file \"" + entry.fileName + "\"\n\t" + ex.Message);
-                return TagWriterReturnCode.OtherError;
-            }
+
+            // Before doing anything, remove any tags that aren't on the disk.
+            TagTypes tagLibCreatedTags = file.TagTypes ^ file.TagTypesOnDisk;
+            file.RemoveTags(tagLibCreatedTags);
+
+            // Then create a new tag type if needed
+            TagLibUtility.CreateTagIfRequired(file, out TagTypes usedTagTypes);
+
+            // Remove the ID3v1 tag if set in the settings at this point
+            if (Settings.Current.removeID3v1 && file.TagTypes.HasFlag(TagTypes.Id3v1))
+                file.RemoveTags(TagTypes.Id3v1);
+
+			// --- RESUME COPYING OVER FROM HERE ---
 
             // If we're in remove move
             if (args.removeTags)
             {
                 if (!args.skipDateAdded)
-                    RemoveCustomTag(file, Consts.TAG_DATE_ADDED, ds);
+                    TagLibUtility.RemoveCustomTag(file, Consts.TAG_DATE_ADDED, ds);
                 if (!args.skipLastPlayed)
-                    RemoveCustomTag(file, Consts.TAG_LAST_PLAYED, ds);
+                    TagLibUtility.RemoveCustomTag(file, Consts.TAG_LAST_PLAYED, ds);
                 if (!args.skipPlayCount)
-                    RemoveCustomTag(file, Consts.TAG_PLAY_COUNT, ds);
+                    TagLibUtility.RemoveCustomTag(file, Consts.TAG_PLAY_COUNT, ds);
                 if (!args.skipRating)
-                    RemoveRating(file, ds);
+                    TagLibUtility.RemoveRating(file, ds);
 
                 entry.wroteTags = false;
             }
@@ -427,7 +514,7 @@ namespace if2ktool_gui
                         ds.Log(string.Format("\tWriting {0}: {1}\n\t-> Converted to {3} (or {2})", Consts.PLIST_KEY_DATE_ADDED, entry.dateAdded.ToString("o", System.Globalization.CultureInfo.InvariantCulture), entry.dateAdded.ToString(), dateAddedWinTime));
 
                     // Write the tag
-                    WriteCustomTag(file, Consts.TAG_DATE_ADDED, dateAddedWinTime.ToString(), ds);
+                    TagLibUtility.WriteCustomTag(file, Consts.TAG_DATE_ADDED, dateAddedWinTime.ToString(), ds);
                 }
 
                 // Last Played
@@ -440,7 +527,7 @@ namespace if2ktool_gui
                         ds.Log(string.Format("\tWriting {0}: {1}\n\t-> Converted to {3} (or {2})", Consts.PLIST_KEY_LAST_PLAYED, entry.lastPlayed.ToString("o", System.Globalization.CultureInfo.InvariantCulture), entry.lastPlayed.ToString(), lastPlayedWinTime));
 
                     // Write the tag
-                    WriteCustomTag(file, Consts.TAG_LAST_PLAYED, lastPlayedWinTime.ToString(), ds);
+                    TagLibUtility.WriteCustomTag(file, Consts.TAG_LAST_PLAYED, lastPlayedWinTime.ToString(), ds);
                 }
 
                 // Play Count
@@ -450,7 +537,7 @@ namespace if2ktool_gui
                         ds.Log(string.Format("\tWriting {0}: {1}", Consts.PLIST_KEY_PLAY_COUNT, entry.playCount));
 
                     // Write the tag
-                    WriteCustomTag(file, Consts.TAG_PLAY_COUNT, entry.playCount.ToString(), ds);
+                    TagLibUtility.WriteCustomTag(file, Consts.TAG_PLAY_COUNT, entry.playCount.ToString(), ds);
                 }
 
                 // Rating
@@ -462,7 +549,91 @@ namespace if2ktool_gui
                         ds.Log(string.Format("\tWriting {0}: {1} ({2} stars)", Consts.PLIST_KEY_RATING, ratingInStars * 20, ratingInStars));
 
                     // Write the tag
-                    WriteRating(file, ratingInStars, ds);
+                    TagLibUtility.WriteRating(file, ratingInStars, ds);
+                }
+
+                // Process WAV files (after writing stats, since an ID3v2 tag should exist then)
+                if (Settings.Current.writeInfoToWavFiles && file.MimeType == "taglib/wav")
+                {
+                    // This will compare the file with the entry, and will write any missing info that is present in the entry - but not present in the file. Limited to the following tags: Name, Artist, Album Artist, Album, Genre, Comments, Year, Disc Number, Disc Count, Track Number, Track Count
+
+                    ds.Log("\tWriting WAV info:");
+
+                    // Create an Id3v2 tag if it doesn't already exist.
+                    var id3v2tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
+
+                    // Create a RIFF INFO tag if it doesn't already exist
+                    // foobar2000 seems to require a RIFF INFO chunk with at least one tag to detect the ID3v2 tags
+                    var riffInfo = (TagLib.Riff.InfoTag)file.GetTag(TagTypes.RiffInfo, true);
+
+                    // Write track title
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_TITLE)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_TITLE)) && !string.IsNullOrEmpty(entry.trackTitle))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_TITLE, entry.trackTitle, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_TITLE, entry.trackTitle, ds);
+                    }
+
+                    // Write artist
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ARTIST)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_ARTIST)) && !string.IsNullOrEmpty(entry.artist))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_ARTIST, entry.artist, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_ARTIST, entry.artist, ds);
+                    }
+
+                    // Write album artist (ID3v2 only)
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ALBUM_ARTIST)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_ALBUM)) && !string.IsNullOrEmpty(entry.albumArtist))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_ALBUM_ARTIST, entry.albumArtist, ds);
+                    }
+
+                    // Write album
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ALBUM)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_ALBUM)) && !string.IsNullOrEmpty(entry.album))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_ALBUM, entry.album);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_ALBUM, entry.album);
+                    }
+
+                    // Write genre
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_GENRE)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_GENRE)) && !string.IsNullOrEmpty(entry.genre))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_GENRE, entry.genre, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_GENRE, entry.genre, ds);
+                    }
+
+                    // Write year
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_DATE)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_YEAR)) && !string.IsNullOrEmpty(entry.year))
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_DATE, entry.year, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_YEAR, entry.year, ds);
+                    }
+
+                    // Write track number
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_TRACK_NUMBER)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_TRACK_NUMBER)) && entry.trackNumber != null)
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_TRACK_NUMBER, entry.trackNumberDisplay, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_TRACK_NUMBER, entry.trackNumberDisplay, ds);
+                    }
+
+                    // Write disc number (ID3v2 only)
+                    if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_DISC_NUMBER)) && entry.discNumber != null)
+                    {
+                        TagLibUtility.WriteTextTag(id3v2tag, Consts.ID3v2_FRAME_DISC_NUMBER, entry.discNumberDisplay, ds);
+                    }
+
+                    // Write comments
+                    if (string.IsNullOrEmpty(TagLibUtility.GetCommentsTag(file)) &&
+                        string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.RIFF_ID_COMMENTS)) && !string.IsNullOrEmpty(entry.comments))
+                    {
+                        TagLibUtility.WriteCommentsTag(file, entry.comments, ds);
+                        //TagLibUtility.WriteTextTag(riffInfo, Consts.RIFF_ID_COMMENTS, entry.comments, ds);
+                    }
                 }
 
                 entry.wroteTags = true;
@@ -471,15 +642,17 @@ namespace if2ktool_gui
             // Write the modified tags to the file
             try
             {
-                if (Settings.Current.dontAddID3v1 || Settings.Current.removeID3v1)
+                if (Settings.Current.fullLogging)
                 {
-                    // Remove the ID3v1 tag from the tags-to-write
-                    // if the file on disk doesn't have an ID3v1 tag (or if we're forcibly removing it)
-                    if (Settings.Current.removeID3v1 || file.TagTypesOnDisk.HasFlag(TagTypes.Id3v1) == false)
-                        file.RemoveTags(TagTypes.Id3v1);
+                    TagTypes newTags = file.TagTypesOnDisk ^ file.TagTypes;
+
+                    ds.Log("\tTags for writing:\t" + file.TagTypes.ToString());
+                    ds.Log("\t    New tags:\t\t" + newTags.ToString());
+                    ds.Log("\t    Existing tags:\t" + file.TagTypesOnDisk.ToString());
                 }
 
-                file.Save();
+                if (!Settings.Current.dryRun)
+                    file.Save();
 
                 // If we're here, it means the TagLib.File was saved correctly
 
@@ -490,9 +663,13 @@ namespace if2ktool_gui
             }
             catch (IOException ioex)
             {
+                // If this was a retry...
                 if (isRetry)
                 {
-                    ds.LogError("\tCould not save file after retry, exception: " + ioex.Message);
+                    string message = "Could not save file after retry. An exception occurred: " + ioex.Message;
+                    ds.LogError("\t" + message);
+
+                    entryErrors.TryAdd(entry, message);
                     return TagWriterReturnCode.IOEError;
                 }
                 else
@@ -505,8 +682,10 @@ namespace if2ktool_gui
                     // Print the process(es) that are locking the file
                     if (lockingProcesses != null && lockingProcesses.Count > 0)
                     {
-                        ds.LogError("\tThe file appears to be locked by the process: " +
-                            string.Join(", ", lockingProcesses.Select(p => p.ProcessName).ToArray()));
+                        string message = "The file appears to be locked by the process: " + string.Join(", ", lockingProcesses.Select(p => p.ProcessName).ToArray());
+                        ds.LogError("\t" + message);
+
+                        entryErrors.TryAdd(entry, message);
                         return TagWriterReturnCode.IOEError;
                     }
 
@@ -522,229 +701,14 @@ namespace if2ktool_gui
             }
             catch (Exception ex)
             {
-                ds.LogError("An error occurred while saving tags to \"" + entry.fileName + "\": (" + ex.Message + ")");
+                string message = "An error occurred while saving tags to \"" + entry.fileName + "\": (" + ex.Message + ")";
+                ds.LogError("\t" + message);
+                entryErrors.TryAdd(entry, message);
                 return TagWriterReturnCode.OtherError;
             }
 
             file.Dispose();
-
             return TagWriterReturnCode.Success;
-        }
-
-        // --- TagLib Methods ---
-
-        // Write custom, non-standard key-value pair to tags
-        public static void WriteCustomTag(TagLib.File file, string key, string value, DebugStack ds)
-        {
-            // Write ID3v2 TXXX Frame for MP3/AAC/AIFF
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var textframe = TagLib.Id3v2.UserTextInformationFrame.Get(tag, key, StringType.UTF16, true);
-                textframe.Text = new string[] { value };
-
-                if (Settings.Current.fullLogging)
-                    ds.Log("\t-> Wrote ID3V2 TXXX Frame: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            // Write AppleTag AppleAnnotationBox for ALAC/MPEG4
-            else if (file.TagTypes.HasFlag(TagTypes.Apple))
-            {
-                var tag = (TagLib.Mpeg4.AppleTag)file.GetTag(TagTypes.Apple, false);
-
-                // Check to see if we don't already have a DashBox with this key, and if we do - remove it (this format allows multiple DashBoxes with the same key)
-                if (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                    RemoveCustomTag(file, key, ds);
-
-                // AppleAdditionalInfoBoxes prepend the data with 4 null characters for some reason, so hey lets do the same! I'm sure it's for a good cause
-                tag.SetDashBox(Consts.APPLE_TAG_PREFIX + Consts.APPLE_TAG_MEANSTRING,
-                               Consts.APPLE_TAG_PREFIX + key,
-                               value.ToString());
-
-                if (Settings.Current.fullLogging)
-                    ds.Log("\t-> Wrote AppleAnnotationBox tag: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            // Write XiphComment field for FLAC
-            else if (file.TagTypes.HasFlag(TagTypes.FlacMetadata))
-            {
-                var tag = (TagLib.Ogg.XiphComment)file.GetTag(TagTypes.Xiph);
-                tag.SetField(key, new string[] { value });
-
-                if (Settings.Current.fullLogging)
-                    ds.Log("\t-> Wrote Ogg.XiphComment: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            else
-            {
-                ds.LogWarning("\t-> Could not write data. Unsupported or missing tag type!");
-            }
-        }
-
-        // Removes a custom tag with <key> from <file>. Returns true if a tag was found and removed
-        public static bool RemoveCustomTag(TagLib.File file, string key, DebugStack ds)
-        {
-            // Remove ID3v2 TXXX Frame for MP3/AAC/AIFF
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var textFrame = TagLib.Id3v2.UserTextInformationFrame.Get(tag, key, StringType.UTF16, false);
-
-                if (textFrame != null)
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> Removed ID3V2 TXXX Frame with the key \"" + key + "\"");
-
-                    tag.RemoveFrame(textFrame);
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> An ID3V2 TXXX Frame with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-
-            // Remove AppleTag AppleAnnotationBox for ALAC/MPEG4
-            else if (file.TagTypes.HasFlag(TagTypes.Apple))
-            {
-                var tag = (TagLib.Mpeg4.AppleTag)file.GetTag(TagTypes.Apple, false);
-
-                // Only remove if there is something to remove
-                if (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                {
-                    // We have to loop until the DashBox is no longer present, since MP4 tags support multiple
-                    // tagboxes with the same key, and the user may have written to the file more than once
-                    while (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                    {
-                        if (Settings.Current.fullLogging)
-                            ds.Log("\t-> Removed AppleAnnotationBox with the key \"" + key + "\"");
-
-                        // Setting the DashBox to an empty string will remove it. For some reason we don't need to include 4 null characters when removing
-                        tag.SetDashBox(Consts.APPLE_TAG_MEANSTRING, key, string.Empty);
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> An AppleAnnotationBox with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-
-            // Write XiphComment field for FLAC
-            else if (file.TagTypes.HasFlag(TagTypes.FlacMetadata))
-            {
-                var tag = (TagLib.Ogg.XiphComment)file.GetTag(TagTypes.Xiph);
-
-                if (tag.GetField(key) != null)
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> Removed XiphComment with the key \"" + key + "\"");
-
-                    tag.RemoveField(key);
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> A XiphComment with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-            else
-            {
-                ds.LogWarning("\t-> Could not remove data. Unsupported or missing tag type!");
-            }
-
-            return false;
-        }
-
-        // Write rating to tags using Rating enum
-        public static void WriteRating(TagLib.File file, Rating rating, DebugStack ds)
-        {
-            // Do not write if rating is unrated
-            if (rating == Rating.Unrated)
-            {
-                if (Settings.Current.fullLogging)
-                    ds.Log("\t-> Rating not written, since the entry was unrated");
-
-                return;
-            }
-            else
-                WriteRating(file, (int)rating, ds);
-        }
-
-        // Write rating to tags using a star rating
-        public static void WriteRating(TagLib.File file, int starRating, DebugStack ds)
-        {
-            // Write Id3v2 POPM frame
-            // See https://en.wikipedia.org/wiki/ID3#ID3v2_rating_tag_issue
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var popmFrame = TagLib.Id3v2.PopularimeterFrame.Get(tag, Consts.ID3_POPM_USER, true);
-
-                switch (starRating)
-                {
-                    case 1: popmFrame.Rating = Consts.ID3_POPM_RATING_1; break;
-                    case 2: popmFrame.Rating = Consts.ID3_POPM_RATING_2; break;
-                    case 3: popmFrame.Rating = Consts.ID3_POPM_RATING_3; break;
-                    case 4: popmFrame.Rating = Consts.ID3_POPM_RATING_4; break;
-                    case 5: popmFrame.Rating = Consts.ID3_POPM_RATING_5; break;
-                    default:
-                    {
-                        ds.LogWarning("\t-> Invalid rating of " + starRating + " (" + (starRating * 20) + "). Skipping write...");
-                        popmFrame = null;
-                        break;
-                    }
-                }
-
-                if (Settings.Current.fullLogging && popmFrame != null)
-                    ds.Log("\t-> Wrote ID3V2 Popularimeter (POMP) frame: value: " + popmFrame.Rating + " (" + starRating + " stars)");
-            }
-
-            // Apple uses a regular text field, with a 1-5 value
-            // FLAC uses a regular vorbis comment, with a 1-5 value
-            else if (file.TagTypes.HasFlag(TagTypes.Apple) || file.TagTypes.HasFlag(TagTypes.Xiph))
-            {
-                WriteCustomTag(file, Consts.TAG_RATING, starRating.ToString(), ds);
-            }
-        }
-
-        public static void RemoveRating(TagLib.File file, DebugStack ds)
-        {
-            // Remove Id3v2 POPM frame
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var popmFrame = TagLib.Id3v2.PopularimeterFrame.Get(tag, Consts.ID3_POPM_USER, false);
-
-                if (popmFrame != null)
-                {
-                    tag.RemoveFrame(popmFrame);
-
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> Removed ID3V2 Popularimeter (POMP) frame");
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        ds.Log("\t-> An ID3V2 Popularimeter (POMP) frame was not present, so it was not removed");
-                }
-            }
-
-            // For all other fields, use custom rating field
-            else if (file.TagTypes.HasFlag(TagTypes.Apple) || file.TagTypes.HasFlag(TagTypes.Xiph))
-            {
-                RemoveCustomTag(file, Consts.TAG_RATING, ds);
-            }
         }
     }
 }

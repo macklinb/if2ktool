@@ -19,6 +19,9 @@ namespace if2ktool
         // Set to true to not prompt for missing files in this session
         public bool ignoreAll { get; private set; }
 
+        // Set to true if the mapper should ignore other missing entries at this path (directory)
+        public bool ignoreAtPath { get; private set; }
+
         private string missingFilePath;
 
         public MatchManualPrompt(string missingFilePath, string initialFilePath = "")
@@ -37,6 +40,12 @@ namespace if2ktool
 
             // Disable the confirm button until the user has matched the file
             btnConfirm.Enabled = false;
+        }
+        
+        private void MatchManualPrompt_Load(object sender, EventArgs e)
+        {
+            System.Media.SystemSounds.Exclamation.Play();
+            this.Flash(false);
         }
 
         private void btnFind_Click(object sender, EventArgs e)
@@ -108,6 +117,7 @@ namespace if2ktool
         {
             this.lookOther = chkLookOther.Checked;
             this.ignoreAll = chkIgnoreAll.Checked;
+            this.ignoreAtPath = chkIgnoreAtPath.Checked;
 
             // Set initialDirectory if checked
             if (chkPersistPath.CheckState == CheckState.Checked && fixedPath != null)

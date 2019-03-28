@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,7 +15,7 @@ namespace if2ktool
     public partial class PreferencesForm : Form
     {
         Main mainForm;
-
+        
         public PreferencesForm()
         {
             mainForm = (Main)Application.OpenForms["Main"];
@@ -22,7 +23,8 @@ namespace if2ktool
 
             EnumUtils.InitComboBoxWithEnum(cbErrorAction, typeof(WorkerPauseAction));
             EnumUtils.InitComboBoxWithEnum(cbWarningAction, typeof(WorkerPauseAction));
-            EnumUtils.InitComboBoxWithEnum(cbId3v2Version, typeof(ID3v2Version));
+            EnumUtils.InitComboBoxWithEnum(cbForceID3v2Version, typeof(ID3v2Version));
+            EnumUtils.InitComboBoxWithEnum(cbForceID3v2Encoding, typeof(TagLib.StringType));
 
             toolTip.SetToolTip(chkFullLogging, Consts.TOOLTIP_FULL_LOGGING);
             toolTip.SetToolTip(chkLogToFile, Consts.TOOLTIP_LOG_TO_FILE);
@@ -37,9 +39,12 @@ namespace if2ktool
             toolTip.SetToolTip(chkNormalizeStrings, Consts.TOOLTIP_NORMALIZE_STRINGS);
             toolTip.SetToolTip(lblLookupMinMatchPercentHeader, Consts.TOOLTIP_LOOKUP_MIN_MATCH_PERCENTAGE);
             toolTip.SetToolTip(chkForceId3v2Version, Consts.TOOLTIP_FORCE_ID3v2_VERSION);
-            toolTip.SetToolTip(chkDontAddID3v1, Consts.TOOLTIP_DONT_ADD_ID3V1);
+            toolTip.SetToolTip(chkForceId3v2Encoding, Consts.TOOLTIP_FORCE_ID3v2_ENCODING);
             toolTip.SetToolTip(chkRemoveID3v1, Consts.TOOLTIP_FORCE_REMOVE_ID3v1);
             toolTip.SetToolTip(chkUseNumericGenresID3v2, Consts.TOOLTIP_USE_NUMERIC_GENRES_ID3v2);
+            toolTip.SetToolTip(lblMaxParallelThreads, Consts.TOOLTIP_MAX_PARALLEL_THREADS);
+            toolTip.SetToolTip(chkDryRun, Consts.TOOLTIP_DRY_RUN);
+            toolTip.SetToolTip(chkWriteInfoToWavFiles, Consts.TOOLTIP_WRITE_INFO_TO_WAV_FILES);
 
             errorProvider.SetIconPadding(txtReportProgressInterval, 25);
             errorProvider.SetIconPadding(txtErrorWaitTime, 25);
@@ -61,41 +66,48 @@ namespace if2ktool
 
         void InitControlsFromSettings(Settings settings)
         {
-            chkShowConsole.Checked          = settings.showConsole;
-            chkFullLogging.Checked          = settings.fullLogging;
-            chkLogToFile.Checked            = settings.logToFile;
-            chkThreadedLogging.Checked      = settings.threadedLogging;
+            chkShowConsole.Checked              = settings.showConsole;
+            chkFullLogging.Checked              = settings.fullLogging;
+            chkLogToFile.Checked                = settings.logToFile;
+            chkThreadedLogging.Checked          = settings.threadedLogging;
 
-            chkDelayStart.Checked           = settings.workerDelayStart;
-            cbErrorAction.SelectedValue     = settings.workerErrorAction;
-            cbWarningAction.SelectedValue   = settings.workerWarningAction;
-            txtErrorWaitTime.Text           = settings.workerErrorWaitTime.ToString();
-            txtWarningWaitTime.Text         = settings.workerWarningWaitTime.ToString();
-            chkReportProgress.Checked       = settings.workerReportsProgress;
-            txtReportProgressInterval.Text  = settings.workerReportProgressInterval.ToString();
-            chkScrollWithSelection.Checked  = settings.workerScrollWithSelection;
-            chkLockViewToSelection.Enabled  = chkScrollWithSelection.Checked;
-            chkLockViewToSelection.Checked  = settings.workerLockViewToSelection;
+            chkDelayStart.Checked               = settings.workerDelayStart;
+            cbErrorAction.SelectedValue         = settings.workerErrorAction;
+            cbWarningAction.SelectedValue       = settings.workerWarningAction;
+            txtErrorWaitTime.Text               = settings.workerErrorWaitTime.ToString();
+            txtWarningWaitTime.Text             = settings.workerWarningWaitTime.ToString();
+            chkReportProgress.Checked           = settings.workerReportsProgress;
+            txtReportProgressInterval.Text      = settings.workerReportProgressInterval.ToString();
+            chkScrollWithSelection.Checked      = settings.workerScrollWithSelection;
+            chkLockViewToSelection.Enabled      = chkScrollWithSelection.Checked;
+            chkLockViewToSelection.Checked      = settings.workerLockViewToSelection;
 
-            chkPropagateCheckEdits.Checked  = settings.mainPropagateCheckEdits;
-            chkAllowEditRowHeight.Checked   = settings.mainAllowEditRowHeight;
+            chkPropagateCheckEdits.Checked      = settings.mainPropagateCheckEdits;
+            chkAllowEditRowHeight.Checked       = settings.mainAllowEditRowHeight;
 
-            chkAnyExt.Checked               = settings.matchingAnyExtension;
-            chkFuzzy.Checked                = settings.matchingFuzzy;
-            numFuzzyDistance.Value          = settings.matchingFuzzyDistance;
-            chkNormalizeStrings.Checked     = settings.matchingNormalize;
-            chkCheckForDuplicates.Checked   = settings.matchingCheckForDupes;
+            chkAnyExt.Checked                   = settings.matchingAnyExtension;
+            chkFuzzy.Checked                    = settings.matchingFuzzy;
+            numFuzzyDistance.Value              = settings.matchingFuzzyDistance;
+            chkDontPromptFuzzy.Checked          = settings.matchingFuzzyDontPrompt;
+            chkNormalizeStrings.Checked         = settings.matchingNormalize;
+            chkCheckForDuplicates.Checked       = settings.matchingCheckForDupes;
 
-            sldrLookupMinScore.Value        = (int)(10 * settings.lookupMinMatchingPercent);
-            lblLookupMinMatchPercent.Text   = (sldrLookupMinScore.Value * 10) + "%";
-            chkWarnImperfect.Checked        = settings.lookupWarnOnImperfect;
+            sldrLookupMinScore.Value            = (int)(10 * settings.lookupMinMatchingPercent);
+            lblLookupMinMatchPercent.Text       = (sldrLookupMinScore.Value * 10) + "%";
+            chkWarnImperfect.Checked            = settings.lookupWarnOnImperfect;
 
-            chkForceId3v2Version.Checked    = settings.forceID3v2Version != ID3v2Version.None;
-            cbId3v2Version.Enabled          = chkForceId3v2Version.Checked;
-            cbId3v2Version.SelectedValue    = settings.forceID3v2Version;
-            chkDontAddID3v1.Checked         = settings.dontAddID3v1;
-            chkRemoveID3v1.Checked          = settings.removeID3v1;
-            chkUseNumericGenresID3v2.Checked  = settings.useNumericGenresID3v2;
+            chkForceId3v2Version.Checked        = settings.forceID3v2Version;
+            cbForceID3v2Version.Enabled         = chkForceId3v2Version.Checked;
+            cbForceID3v2Version.SelectedValue   = settings.forceID3v2VersionValue;
+            chkForceId3v2Encoding.Checked       = settings.forceID3v2Encoding;
+            cbForceID3v2Encoding.Enabled        = chkForceId3v2Encoding.Checked;
+            cbForceID3v2Encoding.SelectedValue  = settings.forceID3v2EncodingValue;
+            chkRemoveID3v1.Checked              = settings.removeID3v1;
+            chkUseNumericGenresID3v2.Checked    = settings.useNumericGenresID3v2;
+
+            numMaxParallelThreads.Value         = settings.maxParallelThreads;
+            chkDryRun.Checked                   = settings.dryRun;
+            chkWriteInfoToWavFiles.Checked      = settings.writeInfoToWavFiles;
         }
 
         // Writes the settings from the controls to Settings.Current
@@ -151,16 +163,23 @@ namespace if2ktool
             Settings.Current.matchingAnyExtension = chkAnyExt.Checked;
             Settings.Current.matchingFuzzy = chkFuzzy.Checked;
             Settings.Current.matchingFuzzyDistance = Convert.ToInt32(numFuzzyDistance.Value);
+            Settings.Current.matchingFuzzyDontPrompt = chkDontPromptFuzzy.Checked;
             Settings.Current.matchingNormalize = chkNormalizeStrings.Checked;
             Settings.Current.matchingCheckForDupes = chkCheckForDuplicates.Checked;
 
             Settings.Current.lookupMinMatchingPercent = sldrLookupMinScore.Value / 10f;
             Settings.Current.lookupWarnOnImperfect = chkWarnImperfect.Checked;
 
-            Settings.Current.forceID3v2Version = (ID3v2Version)cbId3v2Version.SelectedValue;
-            Settings.Current.dontAddID3v1 = chkDontAddID3v1.Checked;
+            Settings.Current.forceID3v2Version = chkForceId3v2Version.Checked;
+            Settings.Current.forceID3v2VersionValue = (ID3v2Version)cbForceID3v2Version.SelectedValue;
+            Settings.Current.forceID3v2Encoding = chkForceId3v2Encoding.Checked;
+            Settings.Current.forceID3v2EncodingValue = (TagLib.StringType)cbForceID3v2Encoding.SelectedValue;
             Settings.Current.removeID3v1 = chkRemoveID3v1.Checked;
             Settings.Current.useNumericGenresID3v2 = chkUseNumericGenresID3v2.Checked;
+
+            Settings.Current.maxParallelThreads = (int)numMaxParallelThreads.Value;
+            Settings.Current.dryRun = chkDryRun.Checked;
+            Settings.Current.writeInfoToWavFiles = chkWriteInfoToWavFiles.Checked;
 
             return true;
         }
@@ -186,7 +205,12 @@ namespace if2ktool
         
         private void chkForceId3v2Version_CheckedChanged(object sender, EventArgs e)
         {
-            cbId3v2Version.Enabled = chkForceId3v2Version.Checked;
+            cbForceID3v2Version.Enabled = chkForceId3v2Version.Checked;
+        }
+
+        private void chkForceId3v2Encoding_CheckedChanged(object sender, EventArgs e)
+        {
+            cbForceID3v2Encoding.Enabled = chkForceId3v2Encoding.Checked;
         }
 
         private void btnOK_Click(object sender, EventArgs e)
@@ -236,6 +260,21 @@ namespace if2ktool
                 errorProvider.SetError(txtReportProgressInterval, "This value should be at least 50 ms, any lower would introduce lag or even lock the main interface while processing items.");
             else
                 errorProvider.SetError(txtReportProgressInterval, string.Empty);
+        }
+
+        private void toolTip_Popup(object sender, PopupEventArgs e)
+        {
+            using (var graphics = Graphics.FromHwnd(IntPtr.Zero))
+            {
+                string text = toolTip.GetToolTip(e.AssociatedControl);
+                
+                var sizef = graphics.MeasureString(text, SystemFonts.DefaultFont, new SizeF(350f, 0), StringFormat.GenericDefault, out int charactersFitted, out int linesFitted);
+                int width = (int)sizef.Width;
+                var size = new Size(width, 3 + (15 * linesFitted));
+                e.ToolTipSize = size;
+
+                Debug.Log(sizef.ToString() + ", " + size.ToString() + ", charsFitted = " + charactersFitted + ", linesFitted = " + linesFitted);
+            }
         }
     }
 }

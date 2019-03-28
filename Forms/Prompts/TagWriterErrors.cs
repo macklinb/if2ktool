@@ -14,13 +14,23 @@ namespace if2ktool
     {
         Main mainForm;
 
-        public TagWriterErrors(Dictionary<Entry, string> entryErrors)
+        public TagWriterErrors(IDictionary<Entry, string> entryErrors)
         {
             mainForm = (Main)Application.OpenForms["Main"];
             InitializeComponent();
 
             // Display error icon in picturebox
             pictureBox.Image = Bitmap.FromHicon(SystemIcons.Error.Handle);
+
+            var treeViewImages = new Image[]
+            {
+                Properties.Resources.no_image_dots,
+                Bitmap.FromHicon(SystemIcons.Warning.Handle),
+                Bitmap.FromHicon(SystemIcons.Error.Handle)
+            };
+
+            treeView.ImageList = new ImageList();
+            treeView.ImageList.Images.AddRange(treeViewImages);
 
             if (entryErrors != null && entryErrors.Count > 0)
             {
@@ -33,10 +43,11 @@ namespace if2ktool
                 foreach (var entryError in entryErrors)
                 {
                     var node = new TreeNode();
+                    node.ImageIndex = node.SelectedImageIndex = entryError.Value == "Entry is not matched to file" ? 1 : 2;
                     node.Text = string.Format("{0} - {1}", entryError.Key.albumArtist, entryError.Key.trackTitle);
                     node.Name = entryError.Key.id.ToString();
-                    node.Nodes.Add("Path: " + entryError.Key.mappedFilePath);
-                    node.Nodes.Add("Error: " + entryError.Value);
+                    node.Nodes.Add(string.Empty, "Path: " + entryError.Key.mappedFilePath, 0);
+                    node.Nodes.Add(string.Empty, "Error: " + entryError.Value, 0);
                     nodes.Add(node);
                 }
 

@@ -23,8 +23,6 @@ namespace if2ktool
 
         private void lstCandidates_SelectedIndexChanged(object sender, EventArgs e)
         {
-            btnOK.Enabled = listJsonEntries.SelectedIndex > -1;
-
             if (listJsonEntries.SelectedIndex >= 0)
             {
                 var lookupEntry = (MappingWorker.LookupEntry)listJsonEntries.SelectedItem;

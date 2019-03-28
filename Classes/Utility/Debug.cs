@@ -141,9 +141,25 @@ namespace if2ktool
             LogInternal(message, LogType.Info, false, false);
         }
 
+        public static void Log(string message, DebugStack ds)
+        {
+            if (ds != null)
+                ds.Log(message);
+            else
+                Log(message);
+        }
+
         public static void LogLine()
         {
             LogInternal(string.Empty, LogType.Info, false, false);
+        }
+
+        public static void LogLine(DebugStack ds)
+        {
+            if (ds != null)
+                ds.LogLine();
+            else
+                LogLine();
         }
 
         public static void LogInline(string message)
@@ -151,9 +167,25 @@ namespace if2ktool
             LogInternal(message, LogType.Info, false, true);
         }
 
+        public static void LogInline(string message, DebugStack ds)
+        {
+            if (ds != null)
+                ds.LogInline(message);
+            else
+                LogInline(message);
+        }
+
         public static void LogSuccess(string message)
         {
             LogInternal(message, LogType.Success, false, false);
+        }
+
+        public static void LogSuccess(string message, DebugStack ds)
+        {
+            if (ds != null)
+                ds.LogSuccess(message);
+            else
+                LogSuccess(message);
         }
 
         public static void LogError(string message, bool showMsgBox = false)
@@ -161,9 +193,25 @@ namespace if2ktool
             LogInternal(message, LogType.Error, showMsgBox, false);
         }
 
+        public static void LogError(string message, DebugStack ds, bool showMsgBox = false)
+        {
+            if (ds != null)
+                ds.LogError(message, showMsgBox);
+            else
+                LogError(message, showMsgBox);
+        }
+
         public static void LogWarning(string message, bool showMsgBox = false)
         {
             LogInternal(message, LogType.Warning, showMsgBox, false);
+        }
+
+        public static void LogWarning(string message, DebugStack ds, bool showMsgBox = false)
+        {
+            if (ds != null)
+                ds.LogWarning(message, showMsgBox);
+            else
+                LogWarning(message, showMsgBox);
         }
 
         // Only logs if Settings.Current.fullLogging is true
@@ -175,8 +223,17 @@ namespace if2ktool
             }
         }
 
+        public static void LogFull(string message, DebugStack ds)
+        {
+            if (ds != null)
+                ds.LogFull(message);
+            else
+                LogFull(message);
+        }
+
         public static void LogCollection(List<LogItem> logItems)
         {
+            // Lock the queue so that no other items can interject
             lock (logQueue)
             {
                 foreach (LogItem item in logItems)

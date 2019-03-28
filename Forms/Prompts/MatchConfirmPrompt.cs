@@ -22,6 +22,12 @@ namespace if2ktool
             cbAutomaticFuzzy.SelectedIndex = 0;
             cbAutomaticFuzzy.Enabled = false;
         }
+        
+        private void MatchConfirmPrompt_Load(object sender, EventArgs e)
+        {
+            System.Media.SystemSounds.Exclamation.Play();
+            this.Flash(false);
+        }
 
         private void btnConfirm_Click(object sender, EventArgs e)
         {

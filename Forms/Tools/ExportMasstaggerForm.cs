@@ -69,7 +69,7 @@ namespace if2ktool
 
                 if (File.Exists(path))
                 {
-                    if (MessageBox.Show(Path.GetFileName(path) + "already exists.\nDo you want to replace it?", "Confirm export", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                    if (MessageBox.Show(Path.GetFileName(path) + " already exists.\nDo you want to replace it?", "Confirm export", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
                        return;
                 }
 
@@ -78,6 +78,62 @@ namespace if2ktool
         }
 
         private void CreateMasstaggerScript(string filePath)
+        {
+            bool noHeader = chkNoHeader.Checked;
+
+            byte[] header = Consts.MASSTAGGER_HEADER;
+            byte[] action = Consts.MASSTAGGER_ACTION;
+            byte[] scheme = null;
+
+            // Pick scheme
+            if (chkDebugSortOrder.Checked)
+                scheme = Encoding.UTF8.GetBytes(Consts.MASSTAGGER_SCHEME_DEBUG_STR);
+            else
+                scheme = Encoding.UTF8.GetBytes(chkExportInfo.Checked ? Consts.MASSTAGGER_SCHEME_WAV_INFO :
+                                                                        Consts.MASSTAGGER_SCHEME_STATS_STR);
+
+            string inputData = GenerateInputData();
+
+            if (string.IsNullOrEmpty(inputData))
+                return;
+
+            // Generate data
+            byte[] data = Encoding.UTF8.GetBytes(inputData);
+
+            // Resulting bytes which will be written to the file
+            byte[] bytes = new byte[header.Length + action.Length + scheme.Length + data.Length];
+
+            // Length of scheme + data in bytes. We insert this into the header's last 4 bytes
+            byte[] dataLength = BitConverter.GetBytes(scheme.Length + data.Length);
+            System.Buffer.BlockCopy(dataLength, 0, action, action.Length - 4, 4);
+
+            // BlockCopy the header, scheme and data into the final bytes array
+            System.Buffer.BlockCopy(header, 0, bytes, 0, header.Length);
+            System.Buffer.BlockCopy(action, 0, bytes, header.Length, action.Length);
+            System.Buffer.BlockCopy(scheme, 0, bytes, header.Length + action.Length, scheme.Length);
+            System.Buffer.BlockCopy(data  , 0, bytes, header.Length + action.Length + scheme.Length, data.Length);
+
+            try
+            {
+                // Write the bytes to file
+                File.WriteAllBytes(filePath, noHeader ? data : bytes);
+
+                Debug.Log("Wrote " + bytes.Length + " bytes to " + filePath);
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("An error occurred\n\n" + e.Message, true);
+                this.DialogResult = DialogResult.Abort;
+                this.Close();
+            }
+
+            // Open in explorer
+            System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + filePath + "\"");
+        }
+
+        string GenerateInputData()
         {
             bool filterNot = chkFilterNot.Checked;
 
@@ -88,14 +144,16 @@ namespace if2ktool
             bool skipRating = chkSkipRating.Checked;
 
             // Debugging
-            bool noHeader = chkNoHeader.Checked;
             bool addSortField = chkAddSortField.Checked;
             bool debugSortOrder = chkDebugSortOrder.Checked;
             bool appendUnderscore = chkAppendUnderscore.Checked;
-            
+
             // Get entries from rows, ordering by the track title
             var sortOrder = (ExportSortOrder)cbSortOrder.SelectedValue;
             var entries = mainForm.GetRows((EntryFilter)cbFilter.SelectedValue, filterNot).Select(x => (Entry)x.DataBoundItem);
+
+            var sb = new StringBuilder();
+            int offset = 0;
 
             // Sort the entries
             switch (sortOrder)
@@ -114,7 +172,7 @@ namespace if2ktool
                     if (!entries.Any(e => e.lookupIndex != -1))
                     {
                         MessageBox.Show("No sort order has been loaded! Please generate a foobar2000 export from foo_texttools, and load it using the Mapping tool's \"Lookup\" mode. See the GitHub page for more information).", "", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
+                        return null;
                     }
 
                     // Order by lookupIndex and discard entries that do not have a lookupIndex (or the lookupIndex is negative and invalid)
@@ -123,63 +181,6 @@ namespace if2ktool
                     break;
                 }
             }
-
-            var sb = new StringBuilder();
-
-            // Append a string of the data for this entry, in the form "dateadded;lastplayed;playcount;rating\r\n"
-            void AppendEntryData(Entry e)
-            {
-                if (addSortField)
-                {
-                    switch (sortOrder)
-                    {
-                        case ExportSortOrder.TrackTitle:
-                            sb.AppendLine("Track Title: " + e.trackTitle); break;
-                        case ExportSortOrder.FilePath:
-                            sb.AppendLine("File Path: " + e.location.Substring(Main.libraryXmlIsMacForm ? 16 : 17).Replace('/', '\\')); break;
-                        case ExportSortOrder.FileName:
-                            sb.AppendLine("File Name: " + e.fileName); break;
-                        case ExportSortOrder.FileSizeBytes:
-                            sb.AppendLine("File Size: " + e.fileSize.ToString()); break;
-                        case ExportSortOrder.LookupSortOrder:
-                            sb.AppendLine("Index: " + e.lookupIndex); break;
-                    }
-                }
-
-
-                if (!debugSortOrder)
-                {
-                    // Date Played
-                    if (!skipDateAdded && e.dateAdded != DateTime.MinValue)
-                        sb.Append(e.dateAdded.ToFileTime());
-                    sb.Append(";");
-
-                    // Last Played
-                    if (!skipLastPlayed && e.lastPlayed != DateTime.MinValue)
-                        sb.Append(e.lastPlayed.ToFileTime());
-                    sb.Append(";");
-
-                    // Play count
-                    if (!skipPlayCount && e.playCount != 0)
-                        sb.Append(e.playCount);
-                    sb.Append(";");
-
-                    // Rating
-                    if (!skipRating && e.rating != Rating.Unrated)
-                        sb.Append((int)e.rating);
-                }
-
-                // debugSortOrder writes the track title instead of any relevent data, can be used to compare the track name in foobar with the exported track name. This is used to ensure that the sort order is valid
-                else
-                {
-                    sb.Append(e.trackTitle + (appendUnderscore ? "_" : ""));
-                }
-
-                sb.Append("\r\n");
-            }
-
-
-            int offset = 0;
 
             // Loop over every (sorted) entry, writing a line containing the associated data for this track
             foreach (var e in entries)
@@ -201,50 +202,76 @@ namespace if2ktool
                     else if (offset > e.lookupIndex)
                     {
                         Debug.LogError("Entry " + e.fileName + " is out of sequence! Cancelling operation", true);
-                        return;
+                        return null;
                     }
                 }
 
-                // Append the entry data at the current line
-                AppendEntryData(e);
+                // Debug - Add the sort field to the start of the row
+                if (addSortField)
+                {
+                    switch (sortOrder)
+                    {
+                        case ExportSortOrder.TrackTitle:
+                            sb.AppendLine("Track Title: " + e.trackTitle); break;
+                        case ExportSortOrder.FilePath:
+                            sb.AppendLine("File Path: " + e.location.Substring(Main.libraryXmlIsMacForm ? 16 : 17).Replace('/', '\\')); break;
+                        case ExportSortOrder.FileName:
+                            sb.AppendLine("File Name: " + e.fileName); break;
+                        case ExportSortOrder.FileSizeBytes:
+                            sb.AppendLine("File Size: " + e.fileSize.ToString()); break;
+                        case ExportSortOrder.LookupSortOrder:
+                            sb.AppendLine("Index: " + e.lookupIndex); break;
+                    }
+                }
+
+                // debugSortOrder writes the track title instead of any relevent data, can be used to compare the track name in foobar with the exported track name. This is used to ensure that the sort order is valid
+                if (debugSortOrder)
+                {
+                    sb.Append(e.trackTitle + (appendUnderscore ? "_" : ""));
+                }
+
+                // Append a string of the data for this entry, in the form
+                else
+                {
+                    // Append track info in the form
+                    // "%title%;%artist%;%album_artist%;%album%;%date%;%genre%;%tracknumber%;%;%discnumber%;%comments%"
+                    if (chkExportInfo.Checked)
+                    {
+                        sb.Append(string.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", e.trackTitle, e.artist, e.albumArtist, e.album, e.year, e.genre, e.trackNumberDisplay, e.discNumberDisplay, e.comments));
+                    }
+
+                    // Append playback statistics in the form
+                    // "dateadded;lastplayed;playcount;rating\r\n"
+                    else
+                    {
+                        // Date Played
+                        if (!skipDateAdded && e.dateAdded != DateTime.MinValue)
+                            sb.Append(e.dateAdded.ToFileTime());
+                        sb.Append(";");
+
+                        // Last Played
+                        if (!skipLastPlayed && e.lastPlayed != DateTime.MinValue)
+                            sb.Append(e.lastPlayed.ToFileTime());
+                        sb.Append(";");
+
+                        // Play count
+                        if (!skipPlayCount && e.playCount != 0)
+                            sb.Append(e.playCount);
+                        sb.Append(";");
+
+                        // Rating
+                        if (!skipRating && e.rating != Rating.Unrated)
+                            sb.Append((int)e.rating);
+                    } 
+                }
+
+                // CRLF (new line)
+                sb.Append("\r\n");
 
                 offset++;
             }
-            
-            byte[] header = Consts.MASSTAGGER_HEADER;
-            byte[] scheme = debugSortOrder ? Consts.MASSTAGGER_SCHEME_DEBUG : Consts.MASSTAGGER_SCHEME;
-            byte[] data = Encoding.UTF8.GetBytes(sb.ToString());
 
-            // Resulting bytes which will be written to the file
-            byte[] bytes = new byte[header.Length + scheme.Length + data.Length];
-
-            // Length of scheme + data in bytes. We insert this into the header's last 4 bytes
-            byte[] dataLength = BitConverter.GetBytes(scheme.Length + data.Length);
-            System.Buffer.BlockCopy(dataLength, 0, header, header.Length - 4, 4);
-
-            // BlockCopy the header, scheme and data into the final bytes array
-            System.Buffer.BlockCopy(header, 0, bytes, 0, header.Length);
-            System.Buffer.BlockCopy(scheme, 0, bytes, header.Length, scheme.Length);
-            System.Buffer.BlockCopy(data, 0, bytes, header.Length + scheme.Length, data.Length);
-
-            try
-            {
-                // Write the bytes to file
-                File.WriteAllBytes(filePath, noHeader ? data : bytes);
-
-                Debug.Log("Wrote " + bytes.Length + " bytes to " + filePath);
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("An error occurred\n\n" + e.Message, true);
-                this.DialogResult = DialogResult.Abort;
-                this.Close();
-            }
-
-            // Open in explorer
-            System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + filePath + "\"");
+            return sb.ToString();
         }
     }
 }

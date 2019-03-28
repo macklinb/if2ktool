@@ -40,12 +40,13 @@
             this.lblIsSmartValue = new System.Windows.Forms.Label();
             this.lblPersistentIdValue = new System.Windows.Forms.Label();
             this.lblIdValue = new System.Windows.Forms.Label();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.grpProperties = new System.Windows.Forms.GroupBox();
             this.chkExtendedM3u = new System.Windows.Forms.CheckBox();
             this.btnExport = new System.Windows.Forms.Button();
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.groupBox1.SuspendLayout();
+            this.chkIgnoreErrors = new System.Windows.Forms.CheckBox();
+            this.grpProperties.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
@@ -59,7 +60,7 @@
             this.lstPlaylists.Location = new System.Drawing.Point(0, 6);
             this.lstPlaylists.Name = "lstPlaylists";
             this.lstPlaylists.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.lstPlaylists.Size = new System.Drawing.Size(190, 250);
+            this.lstPlaylists.Size = new System.Drawing.Size(190, 154);
             this.lstPlaylists.TabIndex = 0;
             this.lstPlaylists.SelectedValueChanged += new System.EventHandler(this.lstPlaylists_SelectedValueChanged);
             // 
@@ -141,29 +142,27 @@
             this.lblIdValue.TabIndex = 8;
             this.lblIdValue.Text = "-";
             // 
-            // groupBox1
+            // grpProperties
             // 
-            this.groupBox1.Controls.Add(this.lblTracksValue);
-            this.groupBox1.Controls.Add(this.lblId);
-            this.groupBox1.Controls.Add(this.lblIsSmartValue);
-            this.groupBox1.Controls.Add(this.lblPersistentId);
-            this.groupBox1.Controls.Add(this.lblPersistentIdValue);
-            this.groupBox1.Controls.Add(this.lblIsSmart);
-            this.groupBox1.Controls.Add(this.lblIdValue);
-            this.groupBox1.Controls.Add(this.lblTracks);
-            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBox1.Location = new System.Drawing.Point(0, 0);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(197, 256);
-            this.groupBox1.TabIndex = 12;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Properties";
+            this.grpProperties.Controls.Add(this.lblTracksValue);
+            this.grpProperties.Controls.Add(this.lblId);
+            this.grpProperties.Controls.Add(this.lblIsSmartValue);
+            this.grpProperties.Controls.Add(this.lblPersistentId);
+            this.grpProperties.Controls.Add(this.lblPersistentIdValue);
+            this.grpProperties.Controls.Add(this.lblIsSmart);
+            this.grpProperties.Controls.Add(this.lblIdValue);
+            this.grpProperties.Controls.Add(this.lblTracks);
+            this.grpProperties.Location = new System.Drawing.Point(0, 0);
+            this.grpProperties.Name = "grpProperties";
+            this.grpProperties.Size = new System.Drawing.Size(197, 109);
+            this.grpProperties.TabIndex = 12;
+            this.grpProperties.TabStop = false;
+            this.grpProperties.Text = "Properties";
             // 
             // chkExtendedM3u
             // 
-            this.chkExtendedM3u.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.chkExtendedM3u.AutoSize = true;
-            this.chkExtendedM3u.Location = new System.Drawing.Point(218, 323);
+            this.chkExtendedM3u.Location = new System.Drawing.Point(14, 142);
             this.chkExtendedM3u.Name = "chkExtendedM3u";
             this.chkExtendedM3u.Size = new System.Drawing.Size(97, 17);
             this.chkExtendedM3u.TabIndex = 13;
@@ -173,7 +172,7 @@
             // btnExport
             // 
             this.btnExport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnExport.Location = new System.Drawing.Point(325, 320);
+            this.btnExport.Location = new System.Drawing.Point(325, 218);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(75, 23);
             this.btnExport.TabIndex = 14;
@@ -206,35 +205,46 @@
             // 
             // splitContainer.Panel2
             // 
-            this.splitContainer.Panel2.Controls.Add(this.groupBox1);
+            this.splitContainer.Panel2.Controls.Add(this.chkIgnoreErrors);
+            this.splitContainer.Panel2.Controls.Add(this.grpProperties);
+            this.splitContainer.Panel2.Controls.Add(this.chkExtendedM3u);
             this.splitContainer.Panel2MinSize = 190;
-            this.splitContainer.Size = new System.Drawing.Size(391, 256);
+            this.splitContainer.Size = new System.Drawing.Size(391, 160);
             this.splitContainer.SplitterDistance = 190;
             this.splitContainer.TabIndex = 15;
+            // 
+            // chkIgnoreErrors
+            // 
+            this.chkIgnoreErrors.AutoSize = true;
+            this.chkIgnoreErrors.Location = new System.Drawing.Point(13, 119);
+            this.chkIgnoreErrors.Name = "chkIgnoreErrors";
+            this.chkIgnoreErrors.Size = new System.Drawing.Size(105, 17);
+            this.chkIgnoreErrors.TabIndex = 16;
+            this.chkIgnoreErrors.Text = "Ignore any errors";
+            this.chkIgnoreErrors.UseVisualStyleBackColor = true;
             // 
             // ExportPlaylistForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(415, 355);
+            this.ClientSize = new System.Drawing.Size(415, 252);
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.btnExport);
-            this.Controls.Add(this.chkExtendedM3u);
             this.Controls.Add(this.lblDescription);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(431, 250);
+            this.MinimumSize = new System.Drawing.Size(431, 291);
             this.Name = "ExportPlaylistForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Export playlists";
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
+            this.grpProperties.ResumeLayout(false);
+            this.grpProperties.PerformLayout();
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
+            this.splitContainer.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
             this.splitContainer.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -250,10 +260,11 @@
         private System.Windows.Forms.Label lblIsSmartValue;
         private System.Windows.Forms.Label lblPersistentIdValue;
         private System.Windows.Forms.Label lblIdValue;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox grpProperties;
         private System.Windows.Forms.CheckBox chkExtendedM3u;
         private System.Windows.Forms.Button btnExport;
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.CheckBox chkIgnoreErrors;
     }
 }

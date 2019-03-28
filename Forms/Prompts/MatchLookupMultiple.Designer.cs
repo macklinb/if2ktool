@@ -56,6 +56,7 @@
             this.chkHideMatched = new System.Windows.Forms.CheckBox();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnAbort = new System.Windows.Forms.Button();
+            this.cbIgnoreMode = new System.Windows.Forms.ComboBox();
             this.grpTags.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -310,9 +311,9 @@
             // 
             this.btnIgnore.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnIgnore.DialogResult = System.Windows.Forms.DialogResult.Ignore;
-            this.btnIgnore.Location = new System.Drawing.Point(392, 281);
+            this.btnIgnore.Location = new System.Drawing.Point(277, 281);
             this.btnIgnore.Name = "btnIgnore";
-            this.btnIgnore.Size = new System.Drawing.Size(75, 23);
+            this.btnIgnore.Size = new System.Drawing.Size(47, 23);
             this.btnIgnore.TabIndex = 4;
             this.btnIgnore.Text = "Ignore";
             this.btnIgnore.UseVisualStyleBackColor = true;
@@ -343,23 +344,37 @@
             // 
             this.btnAbort.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnAbort.DialogResult = System.Windows.Forms.DialogResult.Abort;
-            this.btnAbort.Location = new System.Drawing.Point(301, 281);
+            this.btnAbort.Location = new System.Drawing.Point(217, 281);
             this.btnAbort.Name = "btnAbort";
-            this.btnAbort.Size = new System.Drawing.Size(75, 23);
+            this.btnAbort.Size = new System.Drawing.Size(54, 23);
             this.btnAbort.TabIndex = 7;
             this.btnAbort.Text = "Abort";
             this.btnAbort.UseVisualStyleBackColor = true;
             this.btnAbort.Click += new System.EventHandler(this.btnAbort_Click);
+            // 
+            // cbIgnoreMode
+            // 
+            this.cbIgnoreMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbIgnoreMode.FormattingEnabled = true;
+            this.cbIgnoreMode.Items.AddRange(new object[] {
+            "This track",
+            "This album",
+            "All unmatched"});
+            this.cbIgnoreMode.Location = new System.Drawing.Point(324, 282);
+            this.cbIgnoreMode.Name = "cbIgnoreMode";
+            this.cbIgnoreMode.Size = new System.Drawing.Size(94, 21);
+            this.cbIgnoreMode.TabIndex = 8;
             // 
             // MatchLookupMultiple
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(564, 315);
+            this.Controls.Add(this.btnIgnore);
+            this.Controls.Add(this.cbIgnoreMode);
             this.Controls.Add(this.btnAbort);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.chkHideMatched);
-            this.Controls.Add(this.btnIgnore);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.lstCandidates);
             this.Controls.Add(this.grpTags);
@@ -370,6 +385,7 @@
             this.Name = "MatchLookupMultiple";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MatchLookupMultiple_FormClosing);
+            this.Load += new System.EventHandler(this.MatchLookupMultiple_Load);
             this.grpTags.ResumeLayout(false);
             this.grpTags.PerformLayout();
             this.ResumeLayout(false);
@@ -407,5 +423,6 @@
         private System.Windows.Forms.CheckBox chkHideMatched;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnAbort;
+        private System.Windows.Forms.ComboBox cbIgnoreMode;
     }
 }

@@ -1,8 +1,8 @@
-# if2ktool - A tool used to migrate some stats (play count, rating, date added and last played) from iTunes to foobar2000's foo_playcount component (Playback Statistics).
+# if2ktool
 
 - [Overview](#overview)
     - [Requirements](#requirements)
-    - [Third party software/libraries used](#third-party-software/libraries-used)
+    - [Third party libraries used](#third-party-libraries-used)
     - [Quick start](#quick-start)
 - [Mapping to files](#mapping-to-files)
 	- [Modes: Direct](#modes-direct)
@@ -20,7 +20,6 @@
 - [Troubleshooting + other stuff](#troubleshooting--other-stuff)
 
 ## Overview
-
 This tool is aimed at people migrating a music library from iTunes to foobar2000, and allows you to keep the various statistics and dates that are saved by iTunes. It reads these fields from your iTunes Library XML, and writes them to the file tags that are expected by the import function of foo_playcount. You can transfer playlists too.
 
 Note that it only works in one direction! You cannot import a collection of files and have them be matched with the XML.
@@ -32,7 +31,7 @@ This tool is very much experimental, and is still in development. By using it, y
 * .NET Framework Version 4.7.2 runtime - [download](https://dotnet.microsoft.com/download)
 * The above requires Windows 7 SP1 or higher.
 
-### Third party software/libraries used
+### Third party libraries used
 * <b>TagLib# (TagLib-Sharp)</b> - Tag reading and writing<br/>
 Copyright © 2019 Mono Project<br/>
 Link: https://github.com/mono/taglib-sharp<br/>
@@ -45,9 +44,14 @@ Licence: https://github.com/JamesNK/Newtonsoft.Json/blob/master/LICENSE.md
 Copyright © 2019 Mono Project + Miguel de Icaza<br/>
 Link: https://www.mono-project.com/archived/mono_dataconvert/<br/>
 Licence: https://github.com/mono/mono/blob/master/LICENSE
+* <b>banshee-itunes-import-plugin</b> (portions of) - Parsing iTunes smart playlists<br/>
+Copyright © 2006 [Scott Peterson](https://github.com/lunchtimemama)<br/>
+Link: https://code.google.com/archive/p/banshee-itunes-import-plugin/<br/>
+Licence: http://www.opensource.org/licenses/mit-license.php<br/>
 
 Thanks
-* To user cvzi on github for [itunes_smartplaylist](https://github.com/cvzi/itunes_smartplaylist), for information regarding the structure and parsing of iTunes Smart Playlists (this feature is not yet complete).
+* To [Scott Peterson](https://github.com/lunchtimemama), for [banshee-itunes-import-plugin](https://code.google.com/archive/p/banshee-itunes-import-plugin/), containing a bulk of information regarding the structure and parsing of iTunes Smart Playlists
+* To user cvzi on github for [itunes_smartplaylist](https://github.com/cvzi/itunes_smartplaylist), for more information regarding this parsing in recent versions of iTunes.
 
 ### Quick start
 1. Import an iTunes Library XML (File -> Open library XML).
@@ -209,31 +213,40 @@ After mapping the iTunes Library XML to the files, the next step is to actually 
 
 The following table represents the tags that are written to the files and read by foo_playcount:
 
-Tag | Plist key | Description
---- | --- | --- | ---
-added_timestamp | Date&nbsp;Added | Integer - [LDAP](https://docs.microsoft.com/en-us/windows/desktop/sysinfo/file-times) timestamp (also called Windows NT time format, [FILETIME](https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime), SYSTEMTIME, NTFS file time)
-last_played_timestamp | Play&nbsp;Date | Integer - Same as above
-play_count | Play&nbsp;Count | Integer - Number of plays
-rating | Rating | Popularimeter (POPM) tag in a range of 0-255 (byte):<br/>1 &nbsp;&nbsp;&nbsp;&nbsp;= ★<br/>64 &nbsp;&nbsp;= ★★<br/>128 = ★★★<br/>196 = ★★★★<br/>255 = ★★★★★
+| Tag | Plist key | Description |
+| --- | --- | --- |
+| added_timestamp | Date&nbsp;Added | Integer - [LDAP](https://docs.microsoft.com/en-us/windows/desktop/sysinfo/file-times) timestamp (also called Windows NT time format, [FILETIME](https://docs.microsoft.com/en-us/windows/desktop/api/minwinbase/ns-minwinbase-filetime), SYSTEMTIME, NTFS file time) |
+| last_played_timestamp | Play&nbsp;Date | Integer - Same as above |
+| play_count | Play&nbsp;Count | Integer - Number of plays |
+| rating | Rating | Popularimeter (POPM) tag in a range of 0-255 (byte):<br/>1 &nbsp;&nbsp;&nbsp;&nbsp;= ★<br/>64 &nbsp;&nbsp;= ★★<br/>128 = ★★★<br/>196 = ★★★★<br/>255 = ★★★★★ |
 
 ### Method 1 - Writing tags directly
 This writes tags directly to the file using the excellent [TagLib-Sharp](https://github.com/mono/taglib-sharp) library. Writing tags with this method is much faster than doing so with Masstagger.
 
 Note that the time that it takes to write tags depends on the size, tag complexity and file format of your library. Larger files take longer to process, and AAC files take significantly longer to write than MP3s. On average this method takes about a minute to process 1000 files on a standard HDD, and likely faster on an SSD.
 
-A parallel version of the `TagWriterWorker` class speeds up this process by about 4 times, however it has not yet been implemented. If you want to test it out, build the executable from source - simply rename `TagWriterWorker_ParallelTest.cs.bkup` to `TagWriterWorker.cs` beforehand.
-
-You can write tags with "Tools -> Write statistics tags to file".
+You can write tags with "Tools -> Write statistics tags to file". Removing tags after they have been imported is done with the "Remove statistics tags from file" in the same menu. Note that you may need to "Reload info" in foobar, using the Tools button in the properties window.
 
 #### Which formats are supported?
 It supports most of the same formats that iTunes does, and a few more:
-* Writing ID3v2 TXXX frames/tags to MP3/AAC/ALAC/AIFF files
-* Writing MP4 "Apple annotation box"s (MPEG-4 Part 14) to ALAC files
-* Writing Vorbis comments for FLAC files.
+* Writing ID3v2 TXXX frames/tags to MP3/AAC/ALAC/AIFF/WAVE files
+* Writing MP4 "Apple annotation box"s (MPEG-4 Part 14) to ALAC and AAC files
+* Writing Vorbis/Xiphcomments for FLAC and OGG files.
+* Writing APE tags for MP3 files (ID3v2 is preferred).
 
-Unsupported file formats:
-* WAV files are currently not supported, due to TagLib's current inability to write ID3v2 tags in these files.
+<b>Unsupported file formats:</b>
+* RIFF INFO in WAV files aren't supported as they do not allow custom data. An IDv3 tag will be created in these instances.
 * AIFF files that do not use an ID3v2 chunk are not supported. For these files you will have to manually create an ID3v2 chunk with a tool like [kid3](https://kid3.sourceforge.io/).
+
+<b>Regarding WAV files:</b>
+
+WAV files are supported (via ID3v2 tags), however since iTunes does not save tags to WAV files, these files will not contain any informational tags besides the ones written by this tool (unless they had tags before being added to iTunes). This presents an issue in foobar2000, as a playback statistics entry for these files will not be created until there are identifying tags. When importing the playback statistics data written by this tool, these files will be ignored, which will leave gaps in your library.
+
+To avoid this issue, you can check "Write info tags to WAV files" in Preferences -> Tagging. This will cause the tool to check the file tags against the iTunes data, and write the missing data to the file. The data written will include the following tags: Name, Artist, Album Artist, Album, Year, Genre, Track Number + Track Count (as x/y), Disc Number + Disc Count (as x/y), and Comments. For the purpose of simplifying this process, these tags are only written to and read from the ID3v2 chunk, if it exists.
+
+Despite this attempt at a fix, due to TagLib's inability to write foobar-readable tags to WAV files correctly (be it ID3 or RIFF INFO) they will still not be detected in foobar2000. While I don't yet have a solution that isn't annoying, you can try the following:
+* Write tags using the "Write info tags to WAV files" option, then re-write with kid3 (which seems to read the tags fine), or another similar tag-writing program. In kid3 this can be done by converting the ID3 version, or by adding/removing/editing any tag.
+* Use the "export info" option of "File -> Export masstagger mts".
 
 ### Method 2 - Exporting tags for use with Masstagger
 
@@ -344,7 +357,7 @@ This generates a file like the following:
         "artist": "Daft Punk",
         "album": "Homework",
         "trackNumber": 01
-        "path": "D:\\Macklin\\Music\\Daft Punk\\Homework\\High Fidelity\\10 High Fidelity.mp3"
+        "path": "D:\\some\\path\\to\\Music\\Daft Punk\\Homework\\High Fidelity\\10 High Fidelity.mp3"
     },
     ...
     ]
@@ -366,16 +379,21 @@ This generates a file like the following:
     Performs all logging in a separate thread. This greatly speeds up processing time while logging, but means that the logging is no longer in sync with the process, which has a side-effect of not being able to pause the application by selecting the log.
 
 ### Tagging
-* <b>Dry run (not implemented in GUI):</b><br/>
-    Dry run, doesn't write anything to files but will simulate output. This is useful for previewing the output of if2ktool without making changes. Note that this will still ask you to write tags, but won't follow through (promise!).
+* <b>Dry run:</b> (bool) [default: false]<br/>
+    Doesn't write anything to files but will simulate output. This is useful for previewing the output of if2ktool without making changes. This will still ask you to write tags, but won't follow through (promise!). Dry run isn't able to catch file-saving related errors.
+* <b>Write info tags to wave files:</b> (bool) [default: true]<br/>
+    iTunes does not write tags to WAV files. This presents an issue with foo_playcount, as it relies on present tags in order to create a playback statistics entry. If any identifying tags are not present, foobar will skip over them, leaving gaps in your library.<br/><br/>If this option is enabled, (and for WAV files only) the tool will check the file tags against the iTunes data, and will write the missing data to the file. This includes the following tags: Name, Artist, Album Artist, Album, Genre, Comments, Year, Disc Number, Disc Count, Track Number, Track Count. See [Method 1 - Writing tags directly](#method-1---writing-tags-directly) for more info.
+
 * <b>ID3</b>
-    * <b>Force ID3v2 version (List):</b><br/>
+    * <b>Force ID3v2 version:</b> (bool + dropdown) [default: false, ID3v2.3]<br/>
     Force TagLib to write ID3v2 tags in a specific version for every file, rather than in the version of the source file.
-    * <b>Don't add ID3v1 tags (bool):</b><br/>
-    Prevent TagLib from adding an ID3v1 tag to files without one. If this is false, an ID3v1 tag will be created on every single file processed by TagLib.
-    * <b>Force remove ID3v1 (bool):</b><br/>
+	* <b>Force ID3v2 encoding:</b> (bool + dropdown) [default: false, UTF-8]<br/>
+	This sets the encoding used for <i>new</i> ID3v2 text information frames. Note that UTF-8 isn't officially supported in ID3v2.3 and below, though many applications support it anyway. This setting is only really used when ""Write info tags to WAV files"" is used, as all playback statistics tags use ASCII encoding.
+	    * <b>False:</b> UTF-8 will be used as the default encoding for new text-based frames, and TagLib will automatically fall back to using UTF-16 if the version is < ID3v2.4.
+        * <b>True:</b> The encoding for newly-written frames will be forced to this encoding, regardless of ID3v2 version. Existing frames will continue to use whatever encoding they were previously using.
+    * <b>Force remove ID3v1:</b> (bool) [default: false]<br/>
     Forcibly remove all ID3v1 tags from files processed.
-    * <b>Use numeric genres in ID3 (bool):</b><br/>
+    * <b>Use numeric genres in ID3:</b> (bool) [default: true]<br/>
     Disable to prevent genres from being written as indices in ID3v2 tags.
 
 ### Mapping
@@ -414,6 +432,9 @@ In recent versions of iTunes, Apple have hidden the XML from the iTunes director
 
 ### Resetting playback statistics in foobar2000
 If at any point you wish to remove the saved playback statistics in foobar, you can delete the `index-data` folder in `C:\Users\user\AppData\Roaming\foobar2000\` or `%APPDATA%\foobar2000\`. Make sure that it isn't running while doing so. Note that this doesn't delete tagged playback statistics.
+
+### Removing playback statistics tags after they have been written
+This can be done using "Tools -> Remove playback statistics tags from files". It's a good idea to keep the window open after writing tags, as currently there is no way to save mappings. You might need to "Reload info" in foobar2000 after doing this, via the Tools button in the properties window, accessed from the context menu of any track.
 
 ### Warning regarding ID3v2.4-tagged tracks not being recognized by foobar2000
 TabLib has an issue with a small amount of ID3v2.4.0 files. After writing tags in if2ktool, the tags and ID3 version will be unable to be read by foobar2000 when importing the files for the first time. As a precaution, you should import your library into foobar2000 first. If this has occured, you can try editing the tags in another application and/or converting the tags from ID3v2.4 to v2.3 using a tool like [kid3](https://kid3.sourceforge.io/).

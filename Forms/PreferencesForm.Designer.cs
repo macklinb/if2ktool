@@ -68,18 +68,25 @@
             this.grpForm = new System.Windows.Forms.GroupBox();
             this.btnReset = new System.Windows.Forms.Button();
             this.Tagging = new System.Windows.Forms.GroupBox();
-            this.chkUseNumericGenresID3v2 = new System.Windows.Forms.CheckBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.lblTagLibVersion = new System.Windows.Forms.Label();
+            this.cbForceID3v2Encoding = new System.Windows.Forms.ComboBox();
+            this.chkForceId3v2Encoding = new System.Windows.Forms.CheckBox();
+            this.chkUseNumericGenresID3v2 = new System.Windows.Forms.CheckBox();
             this.chkRemoveID3v1 = new System.Windows.Forms.CheckBox();
-            this.chkDontAddID3v1 = new System.Windows.Forms.CheckBox();
-            this.cbId3v2Version = new System.Windows.Forms.ComboBox();
+            this.cbForceID3v2Version = new System.Windows.Forms.ComboBox();
             this.chkForceId3v2Version = new System.Windows.Forms.CheckBox();
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
             this.tabPageWorkers = new System.Windows.Forms.TabPage();
             this.tabPageMapping = new System.Windows.Forms.TabPage();
             this.tabPageTagging = new System.Windows.Forms.TabPage();
+            this.numMaxParallelThreads = new System.Windows.Forms.NumericUpDown();
+            this.lblMaxParallelThreads = new System.Windows.Forms.Label();
+            this.chkDryRun = new System.Windows.Forms.CheckBox();
+            this.chkWriteInfoToWavFiles = new System.Windows.Forms.CheckBox();
             this.errorProvider = new System.Windows.Forms.ErrorProvider(this.components);
+            this.chkDontPromptFuzzy = new System.Windows.Forms.CheckBox();
             this.grpWorkers.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numFuzzyDistance)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.sldrLookupMinScore)).BeginInit();
@@ -93,6 +100,7 @@
             this.tabPageWorkers.SuspendLayout();
             this.tabPageMapping.SuspendLayout();
             this.tabPageTagging.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxParallelThreads)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).BeginInit();
             this.SuspendLayout();
             // 
@@ -336,6 +344,7 @@
             // 
             this.grpMapping.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpMapping.Controls.Add(this.chkDontPromptFuzzy);
             this.grpMapping.Controls.Add(this.chkNormalizeStrings);
             this.grpMapping.Controls.Add(this.chkCheckForDuplicates);
             this.grpMapping.Controls.Add(this.grpLookup);
@@ -397,7 +406,7 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(156, 298);
+            this.btnOK.Location = new System.Drawing.Point(156, 299);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(67, 23);
             this.btnOK.TabIndex = 26;
@@ -408,7 +417,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(229, 298);
+            this.btnCancel.Location = new System.Drawing.Point(229, 299);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(67, 23);
             this.btnCancel.TabIndex = 27;
@@ -421,6 +430,7 @@
             this.toolTip.AutoPopDelay = 32000;
             this.toolTip.InitialDelay = 500;
             this.toolTip.ReshowDelay = 100;
+            this.toolTip.Popup += new System.Windows.Forms.PopupEventHandler(this.toolTip_Popup);
             // 
             // chkShowConsole
             // 
@@ -493,7 +503,7 @@
             // btnReset
             // 
             this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnReset.Location = new System.Drawing.Point(11, 298);
+            this.btnReset.Location = new System.Drawing.Point(11, 299);
             this.btnReset.Name = "btnReset";
             this.btnReset.Size = new System.Drawing.Size(106, 23);
             this.btnReset.TabIndex = 29;
@@ -505,71 +515,92 @@
             // 
             this.Tagging.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Tagging.Controls.Add(this.chkUseNumericGenresID3v2);
+            this.Tagging.Controls.Add(this.label1);
             this.Tagging.Controls.Add(this.lblTagLibVersion);
+            this.Tagging.Controls.Add(this.cbForceID3v2Encoding);
+            this.Tagging.Controls.Add(this.chkForceId3v2Encoding);
+            this.Tagging.Controls.Add(this.chkUseNumericGenresID3v2);
             this.Tagging.Controls.Add(this.chkRemoveID3v1);
-            this.Tagging.Controls.Add(this.chkDontAddID3v1);
-            this.Tagging.Controls.Add(this.cbId3v2Version);
+            this.Tagging.Controls.Add(this.cbForceID3v2Version);
             this.Tagging.Controls.Add(this.chkForceId3v2Version);
             this.Tagging.Location = new System.Drawing.Point(6, 6);
             this.Tagging.Name = "Tagging";
-            this.Tagging.Size = new System.Drawing.Size(281, 170);
+            this.Tagging.Size = new System.Drawing.Size(281, 171);
             this.Tagging.TabIndex = 30;
             this.Tagging.TabStop = false;
             this.Tagging.Text = "TagLib";
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(30, 70);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(201, 13);
+            this.label1.TabIndex = 37;
+            this.label1.Text = "*Note that this only applies to new frames";
+            // 
+            // lblTagLibVersion
+            // 
+            this.lblTagLibVersion.AutoSize = true;
+            this.lblTagLibVersion.Location = new System.Drawing.Point(10, 144);
+            this.lblTagLibVersion.Name = "lblTagLibVersion";
+            this.lblTagLibVersion.Size = new System.Drawing.Size(104, 13);
+            this.lblTagLibVersion.TabIndex = 31;
+            this.lblTagLibVersion.Text = "TagLib-Sharp v0.0.0";
+            // 
+            // cbForceID3v2Encoding
+            // 
+            this.cbForceID3v2Encoding.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbForceID3v2Encoding.FormattingEnabled = true;
+            this.cbForceID3v2Encoding.Location = new System.Drawing.Point(184, 45);
+            this.cbForceID3v2Encoding.Name = "cbForceID3v2Encoding";
+            this.cbForceID3v2Encoding.Size = new System.Drawing.Size(77, 21);
+            this.cbForceID3v2Encoding.TabIndex = 34;
+            // 
+            // chkForceId3v2Encoding
+            // 
+            this.chkForceId3v2Encoding.AutoSize = true;
+            this.chkForceId3v2Encoding.Location = new System.Drawing.Point(13, 49);
+            this.chkForceId3v2Encoding.Name = "chkForceId3v2Encoding";
+            this.chkForceId3v2Encoding.Size = new System.Drawing.Size(132, 17);
+            this.chkForceId3v2Encoding.TabIndex = 33;
+            this.chkForceId3v2Encoding.Text = "Force ID3v2 encoding";
+            this.chkForceId3v2Encoding.UseVisualStyleBackColor = true;
+            this.chkForceId3v2Encoding.CheckedChanged += new System.EventHandler(this.chkForceId3v2Encoding_CheckedChanged);
+            // 
             // chkUseNumericGenresID3v2
             // 
             this.chkUseNumericGenresID3v2.AutoSize = true;
-            this.chkUseNumericGenresID3v2.Location = new System.Drawing.Point(13, 96);
+            this.chkUseNumericGenresID3v2.Location = new System.Drawing.Point(13, 115);
             this.chkUseNumericGenresID3v2.Name = "chkUseNumericGenresID3v2";
             this.chkUseNumericGenresID3v2.Size = new System.Drawing.Size(151, 17);
             this.chkUseNumericGenresID3v2.TabIndex = 32;
             this.chkUseNumericGenresID3v2.Text = "Use numeric genres in ID3";
             this.chkUseNumericGenresID3v2.UseVisualStyleBackColor = true;
             // 
-            // lblTagLibVersion
-            // 
-            this.lblTagLibVersion.AutoSize = true;
-            this.lblTagLibVersion.Location = new System.Drawing.Point(10, 135);
-            this.lblTagLibVersion.Name = "lblTagLibVersion";
-            this.lblTagLibVersion.Size = new System.Drawing.Size(104, 13);
-            this.lblTagLibVersion.TabIndex = 31;
-            this.lblTagLibVersion.Text = "TagLib-Sharp v0.0.0";
-            // 
             // chkRemoveID3v1
             // 
             this.chkRemoveID3v1.AutoSize = true;
-            this.chkRemoveID3v1.Location = new System.Drawing.Point(13, 73);
+            this.chkRemoveID3v1.Location = new System.Drawing.Point(13, 92);
             this.chkRemoveID3v1.Name = "chkRemoveID3v1";
             this.chkRemoveID3v1.Size = new System.Drawing.Size(134, 17);
             this.chkRemoveID3v1.TabIndex = 3;
             this.chkRemoveID3v1.Text = "Remove all ID3v1 tags";
             this.chkRemoveID3v1.UseVisualStyleBackColor = true;
             // 
-            // chkDontAddID3v1
+            // cbForceID3v2Version
             // 
-            this.chkDontAddID3v1.AutoSize = true;
-            this.chkDontAddID3v1.Location = new System.Drawing.Point(13, 50);
-            this.chkDontAddID3v1.Name = "chkDontAddID3v1";
-            this.chkDontAddID3v1.Size = new System.Drawing.Size(127, 17);
-            this.chkDontAddID3v1.TabIndex = 2;
-            this.chkDontAddID3v1.Text = "Don\'t add ID3v1 tags";
-            this.chkDontAddID3v1.UseVisualStyleBackColor = true;
-            // 
-            // cbId3v2Version
-            // 
-            this.cbId3v2Version.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cbId3v2Version.FormattingEnabled = true;
-            this.cbId3v2Version.Location = new System.Drawing.Point(141, 23);
-            this.cbId3v2Version.Name = "cbId3v2Version";
-            this.cbId3v2Version.Size = new System.Drawing.Size(77, 21);
-            this.cbId3v2Version.TabIndex = 1;
+            this.cbForceID3v2Version.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbForceID3v2Version.FormattingEnabled = true;
+            this.cbForceID3v2Version.Location = new System.Drawing.Point(184, 19);
+            this.cbForceID3v2Version.Name = "cbForceID3v2Version";
+            this.cbForceID3v2Version.Size = new System.Drawing.Size(77, 21);
+            this.cbForceID3v2Version.TabIndex = 1;
             // 
             // chkForceId3v2Version
             // 
             this.chkForceId3v2Version.AutoSize = true;
-            this.chkForceId3v2Version.Location = new System.Drawing.Point(13, 27);
+            this.chkForceId3v2Version.Location = new System.Drawing.Point(13, 23);
             this.chkForceId3v2Version.Name = "chkForceId3v2Version";
             this.chkForceId3v2Version.Size = new System.Drawing.Size(122, 17);
             this.chkForceId3v2Version.TabIndex = 0;
@@ -590,7 +621,7 @@
             this.tabControl.Margin = new System.Windows.Forms.Padding(0);
             this.tabControl.Name = "tabControl";
             this.tabControl.SelectedIndex = 0;
-            this.tabControl.Size = new System.Drawing.Size(301, 286);
+            this.tabControl.Size = new System.Drawing.Size(301, 287);
             this.tabControl.TabIndex = 31;
             // 
             // tabPageGeneral
@@ -600,7 +631,7 @@
             this.tabPageGeneral.Location = new System.Drawing.Point(4, 22);
             this.tabPageGeneral.Name = "tabPageGeneral";
             this.tabPageGeneral.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageGeneral.Size = new System.Drawing.Size(293, 260);
+            this.tabPageGeneral.Size = new System.Drawing.Size(293, 261);
             this.tabPageGeneral.TabIndex = 0;
             this.tabPageGeneral.Text = "General";
             this.tabPageGeneral.UseVisualStyleBackColor = true;
@@ -611,7 +642,7 @@
             this.tabPageWorkers.Location = new System.Drawing.Point(4, 22);
             this.tabPageWorkers.Name = "tabPageWorkers";
             this.tabPageWorkers.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageWorkers.Size = new System.Drawing.Size(293, 260);
+            this.tabPageWorkers.Size = new System.Drawing.Size(293, 261);
             this.tabPageWorkers.TabIndex = 1;
             this.tabPageWorkers.Text = "Workers";
             this.tabPageWorkers.UseVisualStyleBackColor = true;
@@ -622,32 +653,97 @@
             this.tabPageMapping.Location = new System.Drawing.Point(4, 22);
             this.tabPageMapping.Name = "tabPageMapping";
             this.tabPageMapping.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageMapping.Size = new System.Drawing.Size(293, 260);
+            this.tabPageMapping.Size = new System.Drawing.Size(293, 261);
             this.tabPageMapping.TabIndex = 2;
             this.tabPageMapping.Text = "Mapping";
             this.tabPageMapping.UseVisualStyleBackColor = true;
             // 
             // tabPageTagging
             // 
+            this.tabPageTagging.Controls.Add(this.numMaxParallelThreads);
+            this.tabPageTagging.Controls.Add(this.lblMaxParallelThreads);
+            this.tabPageTagging.Controls.Add(this.chkDryRun);
+            this.tabPageTagging.Controls.Add(this.chkWriteInfoToWavFiles);
             this.tabPageTagging.Controls.Add(this.Tagging);
             this.tabPageTagging.Location = new System.Drawing.Point(4, 22);
             this.tabPageTagging.Name = "tabPageTagging";
             this.tabPageTagging.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageTagging.Size = new System.Drawing.Size(293, 260);
+            this.tabPageTagging.Size = new System.Drawing.Size(293, 261);
             this.tabPageTagging.TabIndex = 3;
             this.tabPageTagging.Text = "Tagging";
             this.tabPageTagging.UseVisualStyleBackColor = true;
+            // 
+            // numMaxParallelThreads
+            // 
+            this.numMaxParallelThreads.Location = new System.Drawing.Point(190, 186);
+            this.numMaxParallelThreads.Maximum = new decimal(new int[] {
+            16,
+            0,
+            0,
+            0});
+            this.numMaxParallelThreads.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.numMaxParallelThreads.Name = "numMaxParallelThreads";
+            this.numMaxParallelThreads.Size = new System.Drawing.Size(44, 20);
+            this.numMaxParallelThreads.TabIndex = 39;
+            this.numMaxParallelThreads.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            // 
+            // lblMaxParallelThreads
+            // 
+            this.lblMaxParallelThreads.AutoSize = true;
+            this.lblMaxParallelThreads.Location = new System.Drawing.Point(16, 188);
+            this.lblMaxParallelThreads.Name = "lblMaxParallelThreads";
+            this.lblMaxParallelThreads.Size = new System.Drawing.Size(104, 13);
+            this.lblMaxParallelThreads.TabIndex = 38;
+            this.lblMaxParallelThreads.Text = "Max parallel threads:";
+            // 
+            // chkDryRun
+            // 
+            this.chkDryRun.AutoSize = true;
+            this.chkDryRun.Location = new System.Drawing.Point(19, 210);
+            this.chkDryRun.Name = "chkDryRun";
+            this.chkDryRun.Size = new System.Drawing.Size(60, 17);
+            this.chkDryRun.TabIndex = 32;
+            this.chkDryRun.Text = "Dry run";
+            this.chkDryRun.UseVisualStyleBackColor = true;
+            // 
+            // chkWriteInfoToWavFiles
+            // 
+            this.chkWriteInfoToWavFiles.AutoSize = true;
+            this.chkWriteInfoToWavFiles.Location = new System.Drawing.Point(19, 233);
+            this.chkWriteInfoToWavFiles.Name = "chkWriteInfoToWavFiles";
+            this.chkWriteInfoToWavFiles.Size = new System.Drawing.Size(155, 17);
+            this.chkWriteInfoToWavFiles.TabIndex = 31;
+            this.chkWriteInfoToWavFiles.Text = "Write info tags to WAV files";
+            this.chkWriteInfoToWavFiles.UseVisualStyleBackColor = true;
             // 
             // errorProvider
             // 
             this.errorProvider.BlinkStyle = System.Windows.Forms.ErrorBlinkStyle.NeverBlink;
             this.errorProvider.ContainerControl = this;
             // 
+            // chkDontPromptFuzzy
+            // 
+            this.chkDontPromptFuzzy.AutoSize = true;
+            this.chkDontPromptFuzzy.Location = new System.Drawing.Point(166, 46);
+            this.chkDontPromptFuzzy.Name = "chkDontPromptFuzzy";
+            this.chkDontPromptFuzzy.Size = new System.Drawing.Size(86, 17);
+            this.chkDontPromptFuzzy.TabIndex = 32;
+            this.chkDontPromptFuzzy.Text = "Don\'t prompt";
+            this.chkDontPromptFuzzy.UseVisualStyleBackColor = true;
+            // 
             // PreferencesForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(311, 332);
+            this.ClientSize = new System.Drawing.Size(311, 333);
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.btnReset);
             this.Controls.Add(this.btnCancel);
@@ -678,6 +774,8 @@
             this.tabPageWorkers.ResumeLayout(false);
             this.tabPageMapping.ResumeLayout(false);
             this.tabPageTagging.ResumeLayout(false);
+            this.tabPageTagging.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numMaxParallelThreads)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.errorProvider)).EndInit();
             this.ResumeLayout(false);
 
@@ -723,10 +821,9 @@
         private System.Windows.Forms.CheckBox chkThreadedLogging;
         private System.Windows.Forms.Button btnReset;
         private System.Windows.Forms.GroupBox Tagging;
-        private System.Windows.Forms.ComboBox cbId3v2Version;
+        private System.Windows.Forms.ComboBox cbForceID3v2Version;
         private System.Windows.Forms.CheckBox chkForceId3v2Version;
         private System.Windows.Forms.CheckBox chkRemoveID3v1;
-        private System.Windows.Forms.CheckBox chkDontAddID3v1;
         private System.Windows.Forms.TabControl tabControl;
         private System.Windows.Forms.TabPage tabPageGeneral;
         private System.Windows.Forms.TabPage tabPageWorkers;
@@ -735,5 +832,13 @@
         private System.Windows.Forms.Label lblTagLibVersion;
         private System.Windows.Forms.CheckBox chkUseNumericGenresID3v2;
         private System.Windows.Forms.ErrorProvider errorProvider;
+        private System.Windows.Forms.CheckBox chkWriteInfoToWavFiles;
+        private System.Windows.Forms.ComboBox cbForceID3v2Encoding;
+        private System.Windows.Forms.CheckBox chkForceId3v2Encoding;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.CheckBox chkDryRun;
+        private System.Windows.Forms.NumericUpDown numMaxParallelThreads;
+        private System.Windows.Forms.Label lblMaxParallelThreads;
+        private System.Windows.Forms.CheckBox chkDontPromptFuzzy;
     }
 }

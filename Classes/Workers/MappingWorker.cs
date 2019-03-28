@@ -73,7 +73,21 @@ namespace if2ktool
             public string title;
             public string artist;
             public string album;
-            public string trackNumber;
+
+            private string m_trackNumber;
+            public string trackNumber
+            {
+                get { return m_trackNumber; }
+                set
+                {
+                    // Only allow valid numbers to be set
+                    // The conversion is to remove padded zeroes that may sneak through
+                    if (!string.IsNullOrEmpty(value) && Int32.TryParse(value, out int n))
+                        m_trackNumber = n.ToString();
+                    else
+                        m_trackNumber = null;
+                }
+            }
             public string path;
 
             public string displayTitle
@@ -147,7 +161,10 @@ namespace if2ktool
         private static void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             var args = (ProgressArgs)e.UserState;
-            mainForm.SetRowSelection(args.currentRowIndex, true);
+
+            if (Settings.Current.workerScrollWithSelection)
+                mainForm.SetRowSelection(args.currentRowIndex, true);
+
             mainForm.SetProgress(args.processed, args.count, args.timeMs);
 
             TaskbarManager.Instance.SetProgressValue(args.processed, args.count);
@@ -210,9 +227,15 @@ namespace if2ktool
             // List of paths we've manually matched, so that we can refer to these directories for missing files
             var referredPaths = new List<string>();
 
+            // List of paths we should ignore missing matches in.
+            var ignoreMissingPaths = new HashSet<string>();
+
+            // List of specific entries we should ignore (used in lookup mode)
+            var ignoreEntries = new HashSet<Guid>();
+
             // List of paths that we've matched, so that we can check for duplicate matches (not in Lookup mode)
-            // ! Note that this doesn't take into account previous matches, only current matches
-            var matchedPaths = new List<string>();
+            // ! Note that this doesn't take into account previous matches, only current matches !
+            var matchedPaths = new HashSet<string>();
 
             // Do not prompt or error out for unmapped files in this session, or for 
             bool doNotPrompt = false;
@@ -253,16 +276,7 @@ namespace if2ktool
             // Returns true if an entry was already matched to this path (therefore it is a duplicate)
             bool IsDuplicate(string searchString)
             {
-                if (Settings.Current.fullLogging)
-                {
-                    int val = matchedPaths.BinarySearch(searchString);
-
-                    if (val >= 0)
-                        Debug.Log("\t-> An entry was already matched to the path: " + matchedPaths[val]);
-
-                    return val >= 0;
-                }
-                return matchedPaths.BinarySearch(searchString) >= 0;
+                return matchedPaths.Contains(searchString);
             }
 
             Debug.Log(string.Format("Mapping " + count + " entries with the following parameters:\n mappingMode:\t\t{0}\n filter:\t\t{1}{2}\n libraryPath:\t\t{3}\n srcLibraryPath:\t{4}\nSettings:\n anyExtension:\t\t{5}\n fuzzy:\t\t\t{6} (distance = {7})\n normalizeStrings:\t{8}\n\nUse Ctrl-C to terminate", mappingMode, filter, filterNot ? " (NOT)" : "", libraryPath, srcLibraryPath, Settings.Current.matchingAnyExtension, Settings.Current.matchingFuzzy, Settings.Current.matchingFuzzyDistance, Settings.Current.matchingNormalize));
@@ -423,6 +437,8 @@ namespace if2ktool
                     entry.lookupIndex = -1;
                 }
                 
+                // --- Mapped ---
+
                 if (mappingMode == MappingMode.Direct || mappingMode == MappingMode.Mapped)
                 {
                     // Get the original path
@@ -482,7 +498,7 @@ namespace if2ktool
                                 Debug.Log("\t-> DoFuzzyMatch : Fuzzily matched to: " + fuzzyMatchPath);
 
                             // Auto-accept if we shouldn't prompt for fuzzy match
-                            if (alwaysAcceptFuzzyMatch)
+                            if (alwaysAcceptFuzzyMatch || Settings.Current.matchingFuzzyDontPrompt)
                             {
                                 fuzzyMatches++;
                                 filePath = fuzzyMatchPath;
@@ -502,11 +518,16 @@ namespace if2ktool
 
                                 ReportProgress();
 
+                                // Set the taskbar icon state to paused (yellow)
+                                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
+
                                 // Ask the user to confirm the fuzzyMatch, since there's no guarantee that it isn't wrong
                                 var matchConfirmPrompt = new MatchConfirmPrompt(filePath, fuzzyMatchPath);
 
                                 // Show dialogue in context of main thread
                                 mainForm.Invoke(() => matchConfirmPrompt.ShowDialog());
+                                
+                                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
 
                                 sw.Start();
 
@@ -530,6 +551,7 @@ namespace if2ktool
                                 else if (matchConfirmPrompt.DialogResult == DialogResult.Abort)
                                 {
                                     worker.CancelAsync();
+                                    return;
                                 }
 
                                 // Do not match this entry
@@ -571,10 +593,13 @@ namespace if2ktool
                             }
 
                             // Prompt the user regarding the error
-                            else if (Settings.Current.workerErrorAction == WorkerPauseAction.Prompt && !doNotPrompt)
+                            // But only if doNotPrompt is false, and the path isn't in the ignored list
+                            else if (Settings.Current.workerErrorAction == WorkerPauseAction.Prompt && !doNotPrompt && 
+                                     !ignoreMissingPaths.Contains(Path.GetDirectoryName(filePath)))
                             {
                                 sw.Stop();
                                 ReportProgress(true);
+                                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
 
                                 if (Settings.Current.fullLogging)
                                     Debug.Log("\t-> DoManualMatch : Asking user for manual match");
@@ -600,11 +625,16 @@ namespace if2ktool
                                         }
                                     }
                                 }
+
+                                // Add to ignored paths
+                                if (result.addToIgnoredPaths)
+                                    ignoreMissingPaths.Add(Path.GetDirectoryName(filePath));
                                     
                                 // Don't prompt in the future
                                 if (result.ignoreAll)
                                     doNotPrompt = true;
-
+                                
+                                TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
                                 sw.Start();
                             }
                         }
@@ -631,6 +661,8 @@ namespace if2ktool
                     entry.mappedFilePath = filePath;
                 }
 
+                // --- LOOKUP MODE --
+
                 // In MappingMode.Lookup, try to cross-reference the XML entry with an entry in the foobar-sourced JSON file
                 else if (mappingMode == MappingMode.Lookup)
                 {
@@ -644,7 +676,7 @@ namespace if2ktool
                     foreach (LookupEntry lookupEntry in lookup.tracks)
                     {
                         // Do not continue if all values that will be compared are null
-                        if (string.IsNullOrEmpty(entry.trackTitle) && string.IsNullOrEmpty(entry.artist) && string.IsNullOrEmpty(entry.album) && string.IsNullOrEmpty(entry.trackNumber) && string.IsNullOrEmpty(entry.fileName))
+                        if (string.IsNullOrEmpty(entry.trackTitle) && string.IsNullOrEmpty(entry.artist) && string.IsNullOrEmpty(entry.album) && entry.trackNumber == null && string.IsNullOrEmpty(entry.fileName))
                             break;
 
                         // Check if we should cancel
@@ -710,10 +742,10 @@ namespace if2ktool
                                 equalValues++;
                         }
 
-                        if (!IsEitherNull(lookupEntry.trackNumber, entry.trackNumber))
+                        if (!IsEitherNull(lookupEntry.trackNumber, entry.trackNumber.ToString()))
                         {
                             nonNullValues++;
-                            if (StringEquality(lookupEntry.trackNumber, entry.trackNumber))
+                            if (StringEquality(lookupEntry.trackNumber, entry.trackNumber.ToString()))
                                 equalValues++;
                         }
 
@@ -768,6 +800,10 @@ namespace if2ktool
                         // If there were multiple with the highest score
                         if (candidates.Count(x => x.Value == candidates.Values.Max()) > 1)
                         {
+                            sw.Stop();
+                            ReportProgress();
+                            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
+
                             Debug.LogError("\t-> Found multiple candidates with the same score");
 
                             // Prompt the user to select the candidate manually
@@ -778,7 +814,13 @@ namespace if2ktool
                             if (result == DialogResult.OK)
                                 matchedLookupEntry = matchLookupMultiple.matchedLookupEntry;
                             else if (result == DialogResult.Abort)
+                            {
                                 worker.CancelAsync();
+                                return;
+                            }
+
+                            sw.Start();
+                            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
                         }
 
                         // Pick the highest
@@ -808,16 +850,19 @@ namespace if2ktool
                         {
                             sw.Stop();
                             ReportProgress(true);
+                            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Paused);
 
                             if (Settings.Current.workerErrorAction == WorkerPauseAction.Wait)
                                 System.Threading.Thread.Sleep(Settings.Current.workerErrorWaitTime);
-                            else if (Settings.Current.workerErrorAction == WorkerPauseAction.Prompt)
+                            else if (Settings.Current.workerErrorAction == WorkerPauseAction.Prompt && !doNotPrompt && !ignoreEntries.Contains(entry.id))
                             {
                                 // Prompt the user to select the lookup entry manually
                                 var matchLookupMultiple = new MatchLookupMultiple(entry, lookup.tracks.ToList(), MatchLookupMultiple.Mode.SelectAll);
                                 mainForm.Invoke(() => matchLookupMultiple.ShowDialog());
+                                var result = matchLookupMultiple.DialogResult;
 
-                                if (matchLookupMultiple.DialogResult == DialogResult.OK)
+                                // The user clicked "OK"
+                                if (result == DialogResult.OK)
                                 {
                                     matchedLookupEntry = matchLookupMultiple.matchedLookupEntry;
 
@@ -829,12 +874,26 @@ namespace if2ktool
                                         alreadyMatchedEntry.lookupIndex = -1;
                                     }
                                 }
-                                else if (matchLookupMultiple.DialogResult == DialogResult.Abort)
+
+                                // The user clicked "Ignore"
+                                else if (result == DialogResult.Ignore)
+                                {
+                                    // Ignore all of this album (this ignores the album + album artist on the entry side)
+                                    if (matchLookupMultiple.ignoreGuids != null && matchLookupMultiple.ignoreGuids.Length > 0)
+                                        ignoreEntries.UnionWith(matchLookupMultiple.ignoreGuids);
+                                    else if (matchLookupMultiple.ignoreAllUnmatched)
+                                        doNotPrompt = true;
+                                }
+
+                                // The user clicked "Abort"
+                                else if (result == DialogResult.Abort)
                                 {
                                     worker.CancelAsync();
+                                    return;
                                 }
                             }
 
+                            TaskbarManager.Instance.SetProgressState(TaskbarProgressBarState.Normal);
                             sw.Start();
                         }
                     }
@@ -892,6 +951,8 @@ namespace if2ktool
             string resultStr = string.Format("Processed {12} entries in {0}ms ({1})\n {2} matches ({3})\n   {4} normalized matches\n   {5} anyExtension matches\n   {6} fuzzy matches\n   {7} referred matches\n   {8} manual matches\n {9} removed mappings\n {10} removed lookup indexes \n {11} unmapped", sw.ElapsedMilliseconds, timeHr, numMatches, mappingMode.ToString().ToLower(), normalizedMatches, anyExtMatches, fuzzyMatches, referredMatches, manualMatches, removedMappings, removedLookupIndexes, unmapped, count);
             Debug.Log("Done! " + resultStr);
 
+            mainForm.Invoke(() => mainForm.Flash(false));
+            System.Media.SystemSounds.Exclamation.Play();
             MessageBox.Show(resultStr, "Done!", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -937,7 +998,7 @@ namespace if2ktool
             Append("Title", entry.trackTitle, lookupEntry.title);
             Append("Artist", entry.artist, lookupEntry.artist);
             Append("Album", entry.album, lookupEntry.album);
-            Append("Track Num", entry.trackNumber, lookupEntry.trackNumber);
+            Append("Track Num", entry.trackNumber.ToString(), lookupEntry.trackNumber);
             Append("File Name", entry.fileName, lookupEntry.fileName);
 
             sb = sb.Remove(sb.Length - 1, 1);
@@ -1205,6 +1266,7 @@ namespace if2ktool
             public string manualMatchPath;
 
             public bool ignoreAll;
+            public bool addToIgnoredPaths;
             public bool addToReferredPaths;
         }
 
@@ -1226,8 +1288,10 @@ namespace if2ktool
             }
 
             // Do not manually match in the future
-            if (matchManualPrompt.ignoreAll)
-                result.ignoreAll = true;
+            result.ignoreAll = matchManualPrompt.ignoreAll;
+
+            // Do not prompt the user for other missing files at this path
+            result.addToIgnoredPaths = matchManualPrompt.ignoreAtPath;
 
             // If the user fixed the path
             if (matchManualPrompt.fixedPath != null)

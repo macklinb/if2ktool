@@ -74,6 +74,8 @@
     <Compile Include="Classes\Data\Enums.cs" />
     <Compile Include="Classes\Data\Playlist.cs" />
     <Compile Include="Classes\Data\Settings.cs" />
+    <Compile Include="Classes\iTunes\Banshee\Enums.cs" />
+    <Compile Include="Classes\iTunes\Banshee\SmartPlaylistParser.cs" />
     <Compile Include="Classes\iTunes\Enums.cs" />
     <Compile Include="Classes\Data\SortableBindingList.cs" />
     <Compile Include="Classes\Data\ProgressArgs.cs" />
@@ -89,11 +91,13 @@
     <Compile Include="Classes\Data\Entry.cs" />
     <Compile Include="Classes\Utility\DebugStack.cs" />
     <Compile Include="Classes\Utility\Debug.cs" />
+    <None Include="CHANGELOG.md" />
     <None Include="Classes\Utility\Diff.cs.unused" />
     <Compile Include="Classes\Utility\ExtensionMethods.cs" />
     <Compile Include="Classes\Utility\FileLockUtility.cs" />
     <Compile Include="Classes\Utility\PlistHelper.cs" />
-    <Compile Include="Classes\Workers\TagWriterWorker.cs" />
+    <Compile Include="Classes\Utility\TagLibUtility.cs" />
+    <None Include="Classes\Workers\TagWriterWorker.cs.bkup" />
     <Compile Include="Forms\Prompts\TagWriterErrors.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -175,7 +179,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Classes\Workers\TagWriterWorker_ParallelTest.cs.bkup" />
+    <Compile Include="Classes\Workers\TagWriterWorker_Parallel.cs" />
     <EmbeddedResource Include="Forms\Prompts\TagWriterErrors.resx">
       <DependentUpon>TagWriterErrors.cs</DependentUpon>
     </EmbeddedResource>
@@ -238,6 +242,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" />
     <None Include="Resources\CreateLookupJSON.ahk" />
     <None Include="Resources\json_patterns.txt" />
   </ItemGroup>
@@ -245,6 +250,8 @@
     <None Include="Resources\CreateLookupJSON.exe" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="foobar2000_structure.txt" />
+    <Content Include="icons\no-image-dots.png" />
     <Content Include="icon_256px.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

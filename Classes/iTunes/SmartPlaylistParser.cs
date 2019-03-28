@@ -96,6 +96,9 @@ namespace if2ktool.iTunes
             byte[] info = Convert.FromBase64String(infoStr);
             byte[] criteria = Convert.FromBase64String(criteriaStr);
 
+            string infoHexStr = BitConverter.ToString(info);
+            string critHexStr = BitConverter.ToString(criteria);
+
             int offset = (int)CriteriaOffset.FIELD;
 
             var playlist = new SmartPlaylist();
@@ -127,7 +130,7 @@ namespace if2ktool.iTunes
                 int timeMultipleOffset  = offset + (int)CriteriaOffset.TIMEMULTIPLE;
                 int timeValueOffset     = offset + (int)CriteriaOffset.TIMEVALUE;
 
-                // Get the field type for this rule
+                // Get the field name for this rule
                 rule.field = (Field)criteria[offset];
                 Debug.Log("Field is " + rule.field.ToString());
 
@@ -155,7 +158,8 @@ namespace if2ktool.iTunes
                     {
                         // Each char takes two bytes in order to support wide chars (hence the gaps between the characters)
                         // Not only that, but the byte order is big endian, so we can't just cast to a char
-                        rule.stringData += (char)DataConverter.Int16FromBE(criteria, stringOffset + i);//BitConverter.ToChar(criteria, stringOffset + i);
+                        rule.stringData += (char)DataConverter.Int16FromBE(criteria, stringOffset + i);
+                        //BitConverter.ToChar(criteria, stringOffset + i);
                     }
 
                     // We're at the end of the string, shift the offset to the end of the string plus 3
@@ -228,6 +232,17 @@ namespace if2ktool.iTunes
                 {
                     rule.fieldType = FieldType.MediaKind;
                     rule.mediaKindData = (MediaKind)criteria[intAOffset + 4];
+
+                    offset = intAOffset + (int)CriteriaOffset.INTLENGTH;
+                }
+
+                // If the field is a PlaylistPersistentID
+                if (rule.field == Field.PlaylistPersistentID)
+                {
+                    rule.fieldType = FieldType.Playlist;
+
+                    // For some reason the data for a playlist is stored 4 bytes behind the intAOffset, and is repeated for the second int
+                    rule.stringData = BitConverter.ToString(criteria, intAOffset - 4, 8).Replace("-", "");
 
                     offset = intAOffset + (int)CriteriaOffset.INTLENGTH;
                 }

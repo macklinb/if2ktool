@@ -17,7 +17,7 @@ namespace if2ktool
         public bool threadedLogging = true;
 
         // Worker settings
-        public bool workerDelayStart = true;
+        public bool workerDelayStart = false;
         public WorkerPauseAction workerErrorAction = WorkerPauseAction.Prompt;
         public WorkerPauseAction workerWarningAction = WorkerPauseAction.None;
         public int workerErrorWaitTime = 500;
@@ -35,16 +35,23 @@ namespace if2ktool
         public bool matchingAnyExtension;
         public bool matchingFuzzy = true;
         public int matchingFuzzyDistance = 3;
+        public bool matchingFuzzyDontPrompt = false;
         public bool matchingNormalize = true;
         public bool matchingCheckForDupes = true;
         public float lookupMinMatchingPercent = 0.5f;
         public bool lookupWarnOnImperfect = true;
 
         // Tagging settings
-        public ID3v2Version forceID3v2Version = ID3v2Version.None;
-        public bool dontAddID3v1 = true;
+        public bool forceID3v2Version = false;
+        public ID3v2Version forceID3v2VersionValue = ID3v2Version.ID3v2_3;
+        public bool forceID3v2Encoding = false;
+        public TagLib.StringType forceID3v2EncodingValue = TagLib.StringType.UTF8;
         public bool removeID3v1;
         public bool useNumericGenresID3v2 = true;
+
+        public int maxParallelThreads = 4;
+        public bool dryRun = false;
+        public bool writeInfoToWavFiles = false;
 
         // Loads the settings from file, otherwise loads the default
         public static void Init()

@@ -3,20 +3,24 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace if2ktool
 {
     public partial class MatchLookupMultiple : Form
     {
+        public MappingWorker.LookupEntry matchedLookupEntry { get; private set; }
+        public Guid[] ignoreGuids { get; private set; }
+        public bool ignoreAllUnmatched;
+
         Entry sourceEntry;
-
-        public MappingWorker.LookupEntry matchedLookupEntry;
-
-        const string MODE_CANDIDATES_DESC = "Found more than one possible match for the following entry. Please select the correct item then click \"OK\", or click \"Ignore\" to skip over this entry.";
-        const string MODE_ALL_DESC = "No match was found for the following entry. Please select the correct item and then click \"OK\", or click \"Ignore\" to skip over this entry.";
+        Main mainForm;
 
         MappingWorker.LookupEntry[] items;
         MappingWorker.LookupEntry[] itemsUnmatched;
+
+        const string MODE_CANDIDATES_DESC = "Found more than one possible match for the following entry. Please select the correct item then click \"OK\", or click \"Ignore\" to skip over this entry.";
+        const string MODE_ALL_DESC = "No match was found for the following entry. Please select the correct item and then click \"OK\", or click \"Ignore\" to skip over this entry.";
 
         public enum Mode
         {
@@ -27,7 +31,8 @@ namespace if2ktool
         public MatchLookupMultiple(Entry entry, List<MappingWorker.LookupEntry> candidates, Mode mode)
         {
             InitializeComponent();
-            lstCandidates.DoubleBuffered(true);
+
+            mainForm = (Main)Application.OpenForms["Main"];
 
             this.sourceEntry = entry;
 
@@ -36,9 +41,11 @@ namespace if2ktool
                 SetLabelText(lblTitleSource, entry.trackTitle);
                 SetLabelText(lblArtistSource, entry.artist);
                 SetLabelText(lblAlbumSource, entry.album);
-                SetLabelText(lblTrackNumSource, entry.trackNumber);
+                SetLabelText(lblTrackNumSource, entry.trackNumber.ToString());
                 SetLabelText(lblFileNameSource, entry.fileName);
             }
+            
+            lstCandidates.DoubleBuffered(true);
 
             // Add items to lstCandidates
             lstCandidates.DisplayMember = "displayTitle";
@@ -51,6 +58,8 @@ namespace if2ktool
                 lstCandidates.DataSource = items;
             }
 
+            lstCandidates.ClearSelected();
+
             btnOK.Enabled = lstCandidates.SelectedIndex > -1;
 
             // Select the lookup entry from a small list of candidates
@@ -61,6 +70,12 @@ namespace if2ktool
                 lstCandidates.Location = new Point(32, 58);
                 lstCandidates.Size = new Size(298, 69);
                 this.Size = new Size(378, 433);
+
+                chkHideMatched.Visible = false;
+                txtSearch.Visible = false;
+
+                // Hide the ignore mode dropdown (only allow ignoring this track)
+                cbIgnoreMode.Visible = false;
             }
 
             // Select the lookup entry from every possible lookup entry
@@ -72,6 +87,14 @@ namespace if2ktool
                 lstCandidates.Size = new Size(196, 264);
                 this.Size = new Size(580, 354);
             }
+
+            cbIgnoreMode.SelectedIndex = 0;
+        }
+
+        private void MatchLookupMultiple_Load(object sender, EventArgs e)
+        {
+            System.Media.SystemSounds.Exclamation.Play();
+            this.Flash(false);
         }
 
         private void btnOK_Click(object sender, EventArgs e)
@@ -83,6 +106,15 @@ namespace if2ktool
 
         private void btnIgnore_Click(object sender, EventArgs e)
         {
+            if (cbIgnoreMode.SelectedIndex == 1)
+            {
+                ignoreGuids = mainForm.GetEntriesEnumerable(EntryFilter.AllEntries).Where(x => x.album == sourceEntry.album && (x.albumArtist == sourceEntry.albumArtist || (sourceEntry.compilation == true ? x.compilation == true : false)) ).Select(x => x.id).ToArray();
+            }
+            else if (cbIgnoreMode.SelectedIndex == 2)
+            {
+                ignoreAllUnmatched = true;
+            }
+
             matchedLookupEntry = null;
             this.Close();
         }
@@ -99,7 +131,6 @@ namespace if2ktool
 
             if (lstCandidates.SelectedIndex >= 0)
             {
-                //var lookupEntry = candidates[lstCandidates.SelectedIndex];
                 var lookupEntry = (MappingWorker.LookupEntry)lstCandidates.SelectedItem;
 
                 SetLabelText(lblTitleCandidate, lookupEntry.title);
@@ -112,10 +143,27 @@ namespace if2ktool
                 SetEqualsMark(lblAlbumEquals, sourceEntry.album, lookupEntry.album);
 
                 SetLabelText(lblTrackNumCandidate, lookupEntry.trackNumber);
-                SetEqualsMark(lblTrackNumEquals, sourceEntry.trackNumber, lookupEntry.trackNumber);
+                SetEqualsMark(lblTrackNumEquals, sourceEntry.trackNumber.ToString(), lookupEntry.trackNumber);
 
                 SetLabelText(lblFileNameCandidate, lookupEntry.fileName);
                 SetEqualsMark(lblFileNameEquals, sourceEntry.fileName, lookupEntry.fileName);
+            }
+            else
+            {
+                SetLabelText(lblTitleCandidate, string.Empty);
+                SetEqualsMark(lblTitleEquals, sourceEntry.trackTitle, null);
+
+                SetLabelText(lblArtistCandidate, string.Empty);
+                SetEqualsMark(lblArtistEquals, sourceEntry.artist, null);
+
+                SetLabelText(lblAlbumCandidate, string.Empty);
+                SetEqualsMark(lblAlbumEquals, sourceEntry.album, null);
+
+                SetLabelText(lblTrackNumCandidate, string.Empty);
+                SetEqualsMark(lblTrackNumEquals, sourceEntry.trackNumber.ToString(), null);
+
+                SetLabelText(lblFileNameCandidate, string.Empty);
+                SetEqualsMark(lblFileNameEquals, sourceEntry.fileName, null);
             }
         }
 

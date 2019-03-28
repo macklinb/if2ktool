@@ -58,3 +58,7 @@ Rating | Exported as | Import
 3 | 149 | 128-170
 4 | 191 | 171-213
 5 | 234 | 214-255
+
+===
+iTunes smart playlist:
+Data is stored as base64 encoded strings in the "Smart Info" and "Smart Criteria" keys of a playlist entry in the iTunes XML.

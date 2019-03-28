@@ -65,6 +65,8 @@ namespace if2ktool
             EnumUtils.InitComboBoxWithEnum(cbRatingValue, typeof(Rating));
             EnumUtils.InitComboBoxWithEnum(cbRatingValue, typeof(Rating));
 
+            toolStripSearchMode.SelectedIndex = 0;
+
             // Disable scrolling in cbRatingValue
             cbRatingValue.MouseWheel += (s, e) =>
             {
@@ -92,11 +94,14 @@ namespace if2ktool
             dgvEntries.AllowUserToResizeRows = Settings.Current.mainAllowEditRowHeight;
 
             // Set some TagLib options
-            if (Settings.Current.forceID3v2Version != ID3v2Version.None)
-            {
-                TagLib.Id3v2.Tag.DefaultVersion = Convert.ToByte(Settings.Current.forceID3v2Version);
-                TagLib.Id3v2.Tag.ForceDefaultVersion = true;
-            }
+
+            // Set DefaultVersion (if it is being forced), overwise keep at default of 3
+            TagLib.Id3v2.Tag.DefaultVersion = Settings.Current.forceID3v2Version ? Convert.ToByte(Settings.Current.forceID3v2VersionValue) : (byte)3;
+            TagLib.Id3v2.Tag.ForceDefaultVersion = Settings.Current.forceID3v2Version;
+            
+            // Set DefaultEncoding (if it is being forced), otherwise keep at default of UTF16
+            TagLib.Id3v2.Tag.DefaultEncoding = Settings.Current.forceID3v2Encoding ? Settings.Current.forceID3v2EncodingValue : TagLib.StringType.UTF16;
+            TagLib.Id3v2.Tag.ForceDefaultEncoding = Settings.Current.forceID3v2Encoding;
 
             TagLib.Id3v2.Tag.UseNumericGenres = Settings.Current.useNumericGenresID3v2;
         }
@@ -362,8 +367,7 @@ namespace if2ktool
             {
                 sw.Restart();
 
-                string artistNodeKey = "Unknown Artist";
-                string albumNodeKey = "Unknown Artist";
+                string artistNodeKey, albumNodeKey;
 
                 TreeNode rootNode = new TreeNode();
 
@@ -378,10 +382,15 @@ namespace if2ktool
                     // Get artist and album node keys, and create a trackNode
                     if (e.compilation)
                         artistNodeKey = "Compilations";
-                    else
+                    else if (!string.IsNullOrEmpty(e.albumArtist))
                         artistNodeKey = e.albumArtist;
+                    else
+                        artistNodeKey = Consts.DEFAULT_ARTIST_STR;
 
-                    albumNodeKey = e.album;
+                    if (!string.IsNullOrEmpty(e.album))
+                        albumNodeKey = e.album;
+                    else
+                        albumNodeKey = Consts.DEFAULT_ALBUM_STR;
 
                     // If a node for this artist doesn't exist, create it
                     if (rootNode.Nodes[artistNodeKey] == null)
@@ -473,6 +482,11 @@ namespace if2ktool
 
         public List<Entry> GetEntries(EntryFilter filter, bool NOT = false)
         {
+            return GetEntriesEnumerable(filter, NOT)?.ToList();
+        }
+
+        public IEnumerable<Entry> GetEntriesEnumerable(EntryFilter filter, bool NOT = false)
+        {
             switch (filter)
             {
                 case EntryFilter.AllEntries:
@@ -480,23 +494,23 @@ namespace if2ktool
                     if (NOT)
                         return null;
                     else
-                        return entries.ToList();
+                        return entries.AsEnumerable();
                 }
                 case EntryFilter.Selection:
                 {
-                    return GetRows(filter, NOT).Select(x => (Entry)x.DataBoundItem).ToList();
+                    return GetRows(filter, NOT).Select(x => (Entry)x.DataBoundItem);
                 }
                 case EntryFilter.Marked:
                 {
-                    return entries.Where(x => x.isChecked == !NOT).ToList();
+                    return entries.Where(x => x.isChecked == !NOT);
                 }
                 case EntryFilter.Mapped:
                 {
-                    return entries.Where(x => x.isMapped == !NOT).ToList();
+                    return entries.Where(x => x.isMapped == !NOT);
                 }
                 case EntryFilter.Saved:
                 {
-                    return entries.Where(x => x.wroteTags == !NOT).ToList();
+                    return entries.Where(x => x.wroteTags == !NOT);
                 }
                 default:
                     return null;
@@ -574,6 +588,13 @@ namespace if2ktool
             lblSelectedCount.Text = string.Join(", ", labels);
         }
 
+        public void UnsetRowSelection(int index)
+        {
+            shouldInhibitDataGridViewSelectionEvent = true;
+            dgvEntries.Rows[index].Selected = false;
+            shouldInhibitDataGridViewSelectionEvent = false;
+        }
+
         // This selects the row at the index
         public void SetRowSelection(int index, bool inhibitEvents)
         {
@@ -582,41 +603,38 @@ namespace if2ktool
 
             if (index >= 0 && index < dgvEntries.RowCount && dgvEntries.DisplayedRowCount(false) > 0)
             {
-                if (Settings.Current.workerScrollWithSelection)
+                dgvEntries.ClearSelection();
+                dgvEntries.Rows[index].Selected = true;
+
+                int scrollingRowIndex = -1;
+                /*
+                if (Settings.Current.workerLockViewToSelection)
                 {
-                    dgvEntries.ClearSelection();
-                    dgvEntries.Rows[index].Selected = true;
-
-                    int scrollingRowIndex = -1;
-                    /*
-                    if (Settings.Current.workerLockViewToSelection)
-                    {
-                        if (dgvScrollOffsetFromSelection > 0)
-                            dgvScrollOffsetFromSelection = 0;
-                        else if (dgvScrollOffsetFromSelection < -dgvEntries.DisplayedRowCount(false))
-                            dgvScrollOffsetFromSelection = -dgvEntries.DisplayedRowCount(false);
-                    }
-                    */
-
-                    // If the selected row is still within view, keep scrolling with the selection - otherwise detach from it
-                    if (dgvScrollOffsetFromSelection <= 0 && dgvScrollOffsetFromSelection >= -dgvEntries.DisplayedRowCount(false))
-                    {
-                        scrollingRowIndex = index + dgvScrollOffsetFromSelection;
-                    }
-
-                    // If we should lock the view within the selection
-                    else if (Settings.Current.workerLockViewToSelection)
-                    {
-                        if (dgvScrollOffsetFromSelection < 0)
-                            scrollingRowIndex = index - dgvEntries.DisplayedRowCount(false);
-                        else if (dgvScrollOffsetFromSelection > 0)
-                            scrollingRowIndex = index;
-                    }
-
-                    // Clamp the scrollingRowIndex to the range of DataGridView rows
-                    if (scrollingRowIndex >= 0 && scrollingRowIndex < dgvEntries.RowCount)
-                        dgvEntries.FirstDisplayedScrollingRowIndex = scrollingRowIndex;
+                    if (dgvScrollOffsetFromSelection > 0)
+                        dgvScrollOffsetFromSelection = 0;
+                    else if (dgvScrollOffsetFromSelection < -dgvEntries.DisplayedRowCount(false))
+                        dgvScrollOffsetFromSelection = -dgvEntries.DisplayedRowCount(false);
                 }
+                */
+
+                // If the selected row is still within view, keep scrolling with the selection - otherwise detach from it
+                if (dgvScrollOffsetFromSelection <= 0 && dgvScrollOffsetFromSelection >= -dgvEntries.DisplayedRowCount(false))
+                {
+                    scrollingRowIndex = index + dgvScrollOffsetFromSelection;
+                }
+
+                // If we should lock the view within the selection
+                else if (Settings.Current.workerLockViewToSelection)
+                {
+                    if (dgvScrollOffsetFromSelection < 0)
+                        scrollingRowIndex = index - dgvEntries.DisplayedRowCount(false);
+                    else if (dgvScrollOffsetFromSelection > 0)
+                        scrollingRowIndex = index;
+                }
+
+                // Clamp the scrollingRowIndex to the range of DataGridView rows
+                if (scrollingRowIndex >= 0 && scrollingRowIndex < dgvEntries.RowCount)
+                    dgvEntries.FirstDisplayedScrollingRowIndex = scrollingRowIndex;
             }
 
             if (inhibitEvents)
@@ -641,7 +659,11 @@ namespace if2ktool
             // Show/hide properties table
             tableLayoutPanel.Enabled = !show;
 
-            // Disable sorting of rows
+            // Disable/enable searching
+            toolStripSearchBox.Enabled = !show;
+            toolStripSearchMode.Enabled = !show;
+
+            // Disable/enable sorting of rows
             foreach (DataGridViewColumn column in dgvEntries.Columns)
                 column.SortMode = show ? DataGridViewColumnSortMode.NotSortable : DataGridViewColumnSortMode.Automatic;
         }
@@ -670,7 +692,7 @@ namespace if2ktool
                 lblYearValue.Text = selected.Any(x => x.year != firstEntry.year) ? Consts.NOT_EQUAL_CHAR : firstEntry.year;
 
                 // Track number
-                lblTrackNumValue.Text = selected.Any(x => x.trackNumber != firstEntry.trackNumber) ? Consts.NOT_EQUAL_CHAR : firstEntry.trackNumber;
+                lblTrackNumValue.Text = selected.Any(x => x.trackNumber.ToString() != firstEntry.trackNumber.ToString()) ? Consts.NOT_EQUAL_CHAR : firstEntry.trackNumber.ToString();
 
                 // File name
                 lblFileNameValue.Text = selected.Any(x => x.fileName != firstEntry.fileName) ? Consts.NOT_EQUAL_CHAR : firstEntry.fileName;
@@ -790,7 +812,7 @@ namespace if2ktool
             }
             else
             {
-                lblTitleValue.Text = lblArtistValue.Text = lblAlbumArtistValue.Text = lblAlbumValue.Text = lblYearValue.Text = lblTrackNumValue.Text = lblFileNameValue.Text = lblFilePathValue.Text = lblMappedFilePath.Text = lblLookupIndexValue.Text = txtPlayCountValue.Text = "-";
+                lblTitleValue.Text = lblArtistValue.Text = lblAlbumArtistValue.Text = lblAlbumValue.Text = lblYearValue.Text = lblTrackNumValue.Text = lblFileNameValue.Text = lblFilePathValue.Text = txtMappedFilePathValue.Text = lblLookupIndexValue.Text = txtPlayCountValue.Text = "-";
                 dtpDateAddedValue.Value = dtpLastPlayedValue.Value = DateTime.Now;
                 dtpDateAddedValue.Checked = dtpLastPlayedValue.Checked = false;
                 cbRatingValue.SelectedValue = Rating.Unrated;
@@ -1134,6 +1156,161 @@ namespace if2ktool
             else if (TagWriterWorker.InProgress) TagWriterWorker.Paused = savedState;
         }
 
+        bool putCursorAtEndOfSearchboxOnFocus = false;
+
+        // Called when the focus enters the search box
+        private void toolStripSearchBox_Enter(object sender, EventArgs e)
+        {
+            if (toolStripSearchBox.Text == "Search...")
+                toolStripSearchBox.Clear();
+            else
+            {
+                if (putCursorAtEndOfSearchboxOnFocus == true)
+                {
+                    putCursorAtEndOfSearchboxOnFocus = false;
+                    toolStripSearchBox.SelectionStart = toolStripSearchBox.TextLength;
+                    toolStripSearchBox.SelectionLength = 0;
+                }
+                else
+                {
+                    toolStripSearchBox.HideSelection = false;
+                    toolStripSearchBox.SelectionStart = 0;
+                    toolStripSearchBox.SelectionLength = toolStripSearchBox.TextLength;
+                }
+                //toolStripSearchBox.SelectAll();
+                //toolStripSearchBox.Focus();
+            }
+        }
+        
+        // Called when the focus leaves the search box
+        private void toolStripSearchBox_Leave(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(toolStripSearchBox.Text) || string.IsNullOrWhiteSpace(toolStripSearchBox.Text))
+            {
+                toolStripSearchBox.Text = "Search...";
+                toolStripSearchLabel.Text = "";
+            }
+
+            toolStripSearchBox.HideSelection = true;
+            toolStripSearchBox.DeselectAll();
+        }
+
+        // Called when a key is pressed while the focus is on the search box
+        private void toolStripSearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            // When the user presses enter while in the search box, cycle to the next result
+            if (e.KeyCode == Keys.Enter)
+            {
+                // We have results, and the column index is the same
+                if (resultIndex != -1 && dgvEntries.CurrentCell.ColumnIndex == searchColumnIndex)
+                {
+                    // If shift is held, cycle to the previous result
+                    if (e.Modifiers == Keys.Shift)
+                    {
+                        resultIndex--;
+
+                        if (resultIndex < 0)
+                            resultIndex = searchResults.Count - 1;
+                    }
+                    else
+                    {
+                        resultIndex++;
+
+                        if (resultIndex >= searchResults.Count)
+                            resultIndex = 0;
+                    }
+
+                    SetRowSelection(searchResults[resultIndex], false);
+
+                    // Update the label to read the number of results and the currently selected result
+                    toolStripSearchLabel.Text = (resultIndex + 1) + "/" + searchResults.Count + " results";
+
+                    // Set handled to true so that the form doesn't make a noise
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+
+                // Trigger another search if we have no results or if the column index has changed
+                else if (dgvEntries.CurrentCell.ColumnIndex != searchColumnIndex)
+                {
+                    toolStripSearchBox_TextChanged(this, null);
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+            }
+
+            // If the user presses escape, return focus to the DataGridView
+            else if (e.KeyCode == Keys.Escape)
+            {
+                dgvEntries.Focus();
+            }
+        }
+
+        // ResultIndex stores the last result that was cycled to and selected
+        int resultIndex = -1;
+
+        // This is the column that the searchResults are from
+        int searchColumnIndex = -1;
+        List<int> searchResults;
+
+        private void toolStripSearchBox_TextChanged(object sender, EventArgs e)
+        {
+            if (dgvEntries.CurrentCell == null)
+                return;
+
+            // Get some variables needed to perform a search
+            int colIndex = dgvEntries.CurrentCell.ColumnIndex;
+            int searchMode = toolStripSearchMode.SelectedIndex;
+            string searchString = toolStripSearchBox.Text;
+
+            if (string.IsNullOrEmpty(searchString) || string.IsNullOrWhiteSpace(searchString) || searchString == "Search...")
+            {
+                toolStripSearchLabel.Text = "";
+                return;
+            }
+
+            // Initialize the searchResults collection
+            searchResults = new List<int>();
+            searchColumnIndex = colIndex;
+            resultIndex = -1;
+
+            // A parallel for is significantly faster than a regular for, since we have to iterate over potentially tens of thosands of items
+            Parallel.For(0, dgvEntries.Rows.Count, (index, parallelOptions) =>
+            {
+                string value = dgvEntries.Rows[index].Cells[colIndex].Value.ToString().ToLower();
+
+                if ( (searchMode == 0 && value.StartsWith(searchString, true, null)) ||
+                     (searchMode == 1 && value.EndsWith(searchString, true, null)) ||
+                     (searchMode == 2 && value.IndexOf(searchString, StringComparison.OrdinalIgnoreCase) != -1) )
+                {
+                    lock (searchResults)
+                        searchResults.Add(index);
+                }
+            });
+
+            // Sort the results
+            searchResults.Sort();
+
+            // Select the first result
+            if (searchResults.Count > 0)
+            {
+                resultIndex = 0;
+                SetRowSelection(searchResults.First(), false);
+                toolStripSearchLabel.Text = searchResults.Count + " results";
+            }
+            else
+            {
+                toolStripSearchLabel.Text = "No results!";
+            }
+        }
+
+        // Called when the selection of toolStripSearchMode changes
+        // This is used to re-trigger the search for the new mode
+        private void toolStripSearchMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            toolStripSearchBox_TextChanged(this, e);
+        }
+
         // --- DataGridView Events ---
 
         // Called when the dgvEntries needs the row height. Provide the overridden row height
@@ -1206,7 +1383,23 @@ namespace if2ktool
                 }
             }
         }
-        
+
+        // Redirect keydown to search box
+        private void dgvEntries_KeyDown(object sender, KeyEventArgs e)
+        {
+            // If the key pressed was numrow, alpha, numpad (not punctuation marks or other keys)
+            if ( (e.KeyValue >= 48 && e.KeyValue <= 57) || (e.KeyValue >= 65 && e.KeyValue <= 90) || (e.KeyValue >= 96 && e.KeyValue <= 105))
+            {
+                if (e.Alt || e.Control)
+                    return;
+
+                var keyPressAsString = new KeysConverter().ConvertToString(e.KeyCode);
+                toolStripSearchBox.Text = e.Shift ? keyPressAsString.ToUpper() : keyPressAsString.ToLower();
+                putCursorAtEndOfSearchboxOnFocus = true;
+                toolStripSearchBox.Focus();
+            }
+        }
+
         DataGridViewSelectedRowCollection selected;
         int selectedColumnIndex = -1;
 
@@ -1219,10 +1412,14 @@ namespace if2ktool
         private void dgvEntries_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
         {
             // 1. Save the track IDs of the current selection when we're sorting, so that we can re-select the correct rows after sort
-
-            // If we clicked on the header to sort
-            if (e.RowIndex == -1 && dgvEntries.SelectedRows.Count >= 1)
+            
+            // If we left clicked on the header to sort 
+            if (e.Button == MouseButtons.Left && e.RowIndex == -1 && dgvEntries.SelectedRows.Count >= 1)
             {
+                // Ensure that we clicked on the header and not a resize handle
+                DataGridView.HitTestInfo hit = dgvEntries.HitTest(e.X, e.Y);
+                if (hit.Type == DataGridViewHitTestType.ColumnHeader) return;
+
                 // Avoid doing this for more that 500 rows (as it ends up taking too long)
                 if (dgvEntries.SelectedRows.Count > 5000)
                 {
@@ -1233,8 +1430,8 @@ namespace if2ktool
                 // Inhibit selection events before sorting
                 shouldInhibitDataGridViewSelectionEvent = true;
 
-                // Firstly, save the selected column index
-                savedSelectedColumn = dgvEntries.CurrentCell.ColumnIndex;
+                // Firstly, save the column index of the column that is being sorted
+                savedSelectedColumn = e.ColumnIndex;
 
                 // Save the CurrentRow's (the last row selected) track ID
                 // This is the equivalent of the first row in the SelectedRows collection (aka the last row selected)
@@ -1361,6 +1558,7 @@ namespace if2ktool
         // Called after the DataGridView has been sorted
         private void dgvEntries_Sorted(object sender, EventArgs e)
         {
+            Debug.Log("Sorted");
             // Translate the selectedTrackId's back into indexes for selection
             if (selectedTrackIds != null)
             {
@@ -1530,6 +1728,31 @@ namespace if2ktool
         }
 
         // --- Properties Events ---
+        
+        // Click the button next to the mapped path to pick a new mapped path
+        private void btnMappedPath_Click(object sender, EventArgs e)
+        {
+            // Don't allow if there are multiple or no entries selected
+            if (dgvEntries.SelectedRows.Count != 1)
+                return;
+
+            string initialPath = (!string.IsNullOrWhiteSpace(txtMappedFilePathValue.Text) && txtMappedFilePathValue.Text != Consts.NOT_EQUAL_CHAR) ? Path.GetDirectoryName(txtMappedFilePathValue.Text) : sourceLibraryFolderPath;
+
+            var fileOpenDialog = new OpenFileDialog();
+            fileOpenDialog.Filter = "Audio Files|*.mp3;*.m4a;*.m4p;*.ogg;*.flac;*.alac;*.aiff;*.wav;*.wave;*.wma|All files|*.*;";
+
+            if (Directory.Exists(initialPath))
+                fileOpenDialog.InitialDirectory = initialPath;
+
+            // If the user picked a file, make it the target of this entry
+            if (fileOpenDialog.ShowDialog() == DialogResult.OK)
+            {
+                txtMappedFilePathValue.Focus();
+                txtMappedFilePathValue.Text = fileOpenDialog.FileName;
+                txtMappedFilePathValue.Modified = true;
+                this.ActiveControl = null;
+            }
+        }
 
         private void txtMappedFilePathValue_Leave(object sender, EventArgs e)
         {
@@ -1577,6 +1800,7 @@ namespace if2ktool
             }
         }
 
+        // Key down event for mappedFilePathValue textbox
         private void txtMappedFilePathValue_KeyDown(object sender, KeyEventArgs e)
         {
             // Leave focus when enter is pressed (calls the Leave event, therefore setting value)
@@ -1597,28 +1821,15 @@ namespace if2ktool
             }
         }
 
-        // Double click on Mapped path to pick file
+        // Double click on Mapped path to open the mapped path in the explorer
         private void txtMappedFilePathValue_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            // Don't allow if there are multiple or no entries selected
-            if (dgvEntries.SelectedRows.Count != 1)
-                return;
-
-            string initialPath = (!string.IsNullOrWhiteSpace(txtMappedFilePathValue.Text) && txtMappedFilePathValue.Text != Consts.NOT_EQUAL_CHAR) ? Path.GetDirectoryName(txtMappedFilePathValue.Text) : sourceLibraryFolderPath;
-
-            var fileOpenDialog = new OpenFileDialog();
-            fileOpenDialog.Filter = "Audio Files|*.mp3;*.m4a;*.m4p;*.ogg;*.flac;*.alac;*.aiff;*.wav;*.wave;*.wma|All files|*.*;";
-
-            if (Directory.Exists(initialPath))
-                fileOpenDialog.InitialDirectory = initialPath;
-
-            // If the user picked a file, make it the target of this entry
-            if (fileOpenDialog.ShowDialog() == DialogResult.OK)
+            if (!string.IsNullOrEmpty(txtMappedFilePathValue.Text) && txtMappedFilePathValue.Text != Consts.NOT_EQUAL_CHAR)
             {
-                txtMappedFilePathValue.Focus();
-                txtMappedFilePathValue.Text = fileOpenDialog.FileName;
-                txtMappedFilePathValue.Modified = true;
-                this.ActiveControl = null;
+                string path = txtMappedFilePathValue.Text;
+
+                if (File.Exists(path) || Directory.Exists(path))
+                    System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + path + "\"");
             }
         }
 

@@ -5,7 +5,8 @@ using System.ComponentModel;
 namespace if2ktool
 {
     // Represents (some) data retrieved from XML (or file, if loading file data)
-    // This information remains consistant, and is NOT changed by this tool
+    // This information remains consistant, and is NOT changed by this tool.
+    // It is also all stored as text
     public class TrackInfo
     {
         // Track info
@@ -14,10 +15,16 @@ namespace if2ktool
         public string artist;
         public string albumArtist;
         public string album;
+        public string genre;
+        public string kind;
         public string trackNumber;
+        public string trackCount;
+        public string discNumber;
+        public string discCount;
         public string year;
-
+        public string comments;
         public bool compilation;
+
         public int fileSize;
         public int totalTime;
         public string location;
@@ -41,8 +48,14 @@ namespace if2ktool
             artist      = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_ARTIST);
             albumArtist = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_ALBUM_ARTIST);
             album       = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_ALBUM);
+            genre       = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_GENRE);
+            kind        = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_KIND);
             trackNumber = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_TRACK_NUMBER);
+            trackCount  = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_TRACK_COUNT);
+            discNumber  = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_DISC_NUMBER);
+            discCount   = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_DISC_COUNT);
             year        = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_YEAR);
+            comments    = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_COMMENTS);
             compilation = PlistHelper.IsKeyInDict(element, Consts.PLIST_KEY_COMPILATION);
 
             dateAdded   = PlistHelper.GetValueOfKeyInDict(element, Consts.PLIST_KEY_DATE_ADDED);
@@ -68,10 +81,6 @@ namespace if2ktool
         public Entry(TrackInfo trackInfo)
         {
             this.trackInfo = trackInfo;
-
-            // Pad track number to two zeroes
-            if (!string.IsNullOrEmpty(trackInfo.trackNumber))
-                trackInfo.trackNumber = trackInfo.trackNumber.PadLeft(2, '0');
 
             // Date Added - Parse ISO 8601 date to DateTime object
             if (!string.IsNullOrEmpty(trackInfo.dateAdded))
@@ -104,6 +113,34 @@ namespace if2ktool
                 // For the relative path, simply remove the music library path portion
                 relativeFilePath = filePath.Replace(Main.sourceLibraryFolderPath, "");
             }
+
+            // Do some conversions here
+
+            // Pad track number to two zeroes
+            if (trackInfo.trackNumber != null)
+            {
+                trackNumber = Convert.ToInt32(trackInfo.trackNumber);
+                trackNumberPadded = trackInfo.trackNumber.PadLeft(2, '0');
+            }
+
+            if (trackInfo.trackCount != null)
+                trackCount = Convert.ToInt32(trackInfo.trackCount);
+
+            if (trackNumber != null && trackCount == null)
+                trackNumberDisplay = trackNumber.ToString();
+            else if (trackNumber != null && trackCount != null)
+                trackNumberDisplay = string.Format("{0}/{1}", trackNumber, trackCount);
+
+            if (trackInfo.discNumber != null)
+                discNumber = Convert.ToInt32(trackInfo.discNumber);
+
+            if (trackInfo.discCount != null)
+                discCount = Convert.ToInt32(trackInfo.discCount);
+
+            if (discNumber != null && discCount == null)
+                discNumberDisplay = discNumber.ToString();
+            else if (discNumber != null && discCount != null)
+                discNumberDisplay = string.Format("{0}/{1}", discNumber, discCount);
         }
 
         // --- Fields/Properties ---
@@ -134,10 +171,8 @@ namespace if2ktool
             {
                 if (!string.IsNullOrEmpty(trackInfo.artist))
                     return trackInfo.artist;
-                else if (!string.IsNullOrEmpty(trackInfo.albumArtist))
-                    return trackInfo.albumArtist;
                 else
-                    return Consts.DEFAULT_ARTIST_STR;
+                    return null;
             }
         }
 
@@ -151,7 +186,7 @@ namespace if2ktool
                 else if (!string.IsNullOrEmpty(trackInfo.artist))
                     return trackInfo.artist;
                 else
-                    return Consts.DEFAULT_ARTIST_STR;
+                    return null;
             }
         }
 
@@ -164,30 +199,27 @@ namespace if2ktool
                     return trackInfo.album;
                 else
                     return Consts.DEFAULT_ALBUM_STR;
-                    
+
             }
         }
 
+        [DisplayName("Genre")]
+        public string genre { get { return trackInfo.genre; } }
+
+        [DisplayName("Kind")]
+        public string kind { get { return trackInfo.kind;  } }
+
         [DisplayName("#")]
-        public string trackNumber { get { return trackInfo.trackNumber; } }
+        public string trackNumberDisplay { get; private set; }
 
         [DisplayName("Year")]
         public string year { get { return trackInfo.year; } }
-
-        [Browsable(false)]
-        public int fileSize { get { return trackInfo.fileSize; } }
-
-        [Browsable(false)]
-        public int totalTime { get { return trackInfo.totalTime;  } }
-
-        [Browsable(false)]
-        public bool compilation { get { return trackInfo.compilation; } }
+        
+        [DisplayName("File Name")]
+        public string fileName { get { return trackInfo.fileName; } }
 
         [DisplayName("Location")]
         public string location { get { return trackInfo.location; } }
-
-        [DisplayName("File Name")]
-        public string fileName { get { return trackInfo.fileName; } }
 
         // --- Writing Fields/Properties ---
 
@@ -202,7 +234,7 @@ namespace if2ktool
         public DateTime dateAdded
         {
             get { return _dateAdded; }
-            set { _dateAdded = value; dateAddedDisabled = false;  }
+            set { _dateAdded = value; dateAddedDisabled = false; }
         }
 
         [DisplayName("Last Played")]
@@ -217,6 +249,21 @@ namespace if2ktool
 
         [DisplayName("Rating")]
         public Rating rating { get; set; }
+
+        // --- Unused, or seldom used TrackInfo fields ---
+
+        public string comments { get { return trackInfo.comments; } }
+        public int? trackNumber { get; private set; }
+        public int? trackCount { get; private set; }
+        public int? discNumber { get; private set; }
+        public int? discCount { get; private set; }
+        public bool compilation { get { return trackInfo.compilation; } }
+        public int totalTime { get { return trackInfo.totalTime; } }
+        public int fileSize { get { return trackInfo.fileSize; } }
+
+        // TrackInfo discNumber and discCount formatted as either 'x' or 'x/y'
+        public string trackNumberPadded { get; private set; }
+        public string discNumberDisplay { get; private set; }
 
         // Misc, non display fields
 

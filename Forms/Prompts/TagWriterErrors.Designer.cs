@@ -40,7 +40,7 @@
             this.treeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.treeView.Location = new System.Drawing.Point(12, 74);
+            this.treeView.Location = new System.Drawing.Point(12, 70);
             this.treeView.Name = "treeView";
             this.treeView.Size = new System.Drawing.Size(451, 150);
             this.treeView.TabIndex = 0;
@@ -50,7 +50,7 @@
             // 
             this.lblDescription.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblDescription.Location = new System.Drawing.Point(90, 14);
+            this.lblDescription.Location = new System.Drawing.Point(90, 10);
             this.lblDescription.Name = "lblDescription";
             this.lblDescription.Size = new System.Drawing.Size(365, 50);
             this.lblDescription.TabIndex = 1;
@@ -61,7 +61,7 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(392, 230);
+            this.btnOK.Location = new System.Drawing.Point(392, 228);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(71, 23);
             this.btnOK.TabIndex = 2;
@@ -71,7 +71,7 @@
             // 
             // pictureBox
             // 
-            this.pictureBox.Location = new System.Drawing.Point(28, 14);
+            this.pictureBox.Location = new System.Drawing.Point(28, 10);
             this.pictureBox.Name = "pictureBox";
             this.pictureBox.Size = new System.Drawing.Size(40, 50);
             this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -89,6 +89,7 @@
             this.Controls.Add(this.treeView);
             this.MinimumSize = new System.Drawing.Size(305, 250);
             this.Name = "TagWriterErrors";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "TagWriterErrors";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).EndInit();
             this.ResumeLayout(false);

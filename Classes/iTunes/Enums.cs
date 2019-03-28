@@ -117,6 +117,7 @@ namespace if2ktool.iTunes
         Date,
         Boolean,
         MediaKind,
+        Playlist
     }
 
     // Field identifier

@@ -68,17 +68,13 @@ namespace if2ktool
 
     public enum ID3v2Version
     {
-        // Don't force
-        [Description("None")]
-        None,
-
         [Description("ID3v2.2")]
         ID3v2_2 = 2,
 
         [Description("ID3v2.3")]
         ID3v2_3 = 3,
 
-        [Description("ID3v2.3")]
+        [Description("ID3v2.4")]
         ID3v2_4 = 4,
     }
 

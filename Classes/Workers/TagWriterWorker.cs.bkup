@@ -30,8 +30,6 @@ namespace if2ktool
         // Dictionary of entries that occurred during the tagwriter
         static Dictionary<Entry, string> entryErrors;
 
-        static TaskbarItemInfo taskbarItemInfo;
-
         public static bool InProgress
         {
             get { return worker.IsBusy; }
@@ -349,18 +347,35 @@ namespace if2ktool
                     entryErrors.Add(entry, errorMessage);
                     continue;
                 }
+                
+                // Before doing anything, remove any tags that aren't on the disk.
+                TagTypes tagLibCreatedTags = file.TagTypes ^ file.TagTypesOnDisk;
+                file.RemoveTags(tagLibCreatedTags);
+
+                // Then create a new tag type if needed
+                TagLibUtility.CreateTagIfRequired(file, out TagTypes usedTagTypes);
+
+                // Remove the ID3v1 tag if set in the settings at this point
+                if (Settings.Current.removeID3v1 && file.TagTypes.HasFlag(TagTypes.Id3v1))
+                    file.RemoveTags(TagTypes.Id3v1);
+
+                if (Settings.Current.fullLogging)
+                {
+                    Debug.Log("\tTagTypes on disk:\t\t" + file.TagTypesOnDisk.ToString());
+                    Debug.Log("\tRemoved TagTypes not present on disk:\t" + tagLibCreatedTags.ToString());
+                }
 
                 // If we're in remove move
                 if (args.removeTags)
                 {
                     if (!args.skipDateAdded)
-                        RemoveCustomTag(file, Consts.TAG_DATE_ADDED);
+                        TagLibUtility.RemoveCustomTag(file, Consts.TAG_DATE_ADDED);
                     if (!args.skipLastPlayed)
-                        RemoveCustomTag(file, Consts.TAG_LAST_PLAYED);
+                        TagLibUtility.RemoveCustomTag(file, Consts.TAG_LAST_PLAYED);
                     if (!args.skipPlayCount)
-                        RemoveCustomTag(file, Consts.TAG_PLAY_COUNT);
+                        TagLibUtility.RemoveCustomTag(file, Consts.TAG_PLAY_COUNT);
                     if (!args.skipRating)
-                        RemoveRating(file);
+                        TagLibUtility.RemoveRating(file);
 
                     entry.wroteTags = false;
                 }
@@ -378,7 +393,7 @@ namespace if2ktool
                             Debug.Log(string.Format("\tWriting {0}: {1}\n\t-> Converted to {3} (or {2})", Consts.PLIST_KEY_DATE_ADDED, entry.dateAdded.ToString("o", System.Globalization.CultureInfo.InvariantCulture), entry.dateAdded.ToString(), dateAddedWinTime));
 
                         // Write the tag
-                        WriteCustomTag(file, Consts.TAG_DATE_ADDED, dateAddedWinTime.ToString());
+                        TagLibUtility.WriteCustomTag(file, Consts.TAG_DATE_ADDED, dateAddedWinTime.ToString());
                     }
 
                     // Last Played
@@ -391,7 +406,7 @@ namespace if2ktool
                             Debug.Log(string.Format("\tWriting {0}: {1}\n\t-> Converted to {3} (or {2})", Consts.PLIST_KEY_LAST_PLAYED, entry.lastPlayed.ToString("o", System.Globalization.CultureInfo.InvariantCulture), entry.lastPlayed.ToString(), lastPlayedWinTime));
 
                         // Write the tag
-                        WriteCustomTag(file, Consts.TAG_LAST_PLAYED, lastPlayedWinTime.ToString());
+                        TagLibUtility.WriteCustomTag(file, Consts.TAG_LAST_PLAYED, lastPlayedWinTime.ToString());
                     }
 
                     // Play Count
@@ -401,7 +416,7 @@ namespace if2ktool
                             Debug.Log(string.Format("\tWriting {0}: {1}", Consts.PLIST_KEY_PLAY_COUNT, entry.playCount));
 
                         // Write the tag
-                        WriteCustomTag(file, Consts.TAG_PLAY_COUNT, entry.playCount.ToString());
+                        TagLibUtility.WriteCustomTag(file, Consts.TAG_PLAY_COUNT, entry.playCount.ToString());
                     }
 
                     // Rating
@@ -413,7 +428,36 @@ namespace if2ktool
                             Debug.Log(string.Format("\tWriting {0}: {1} ({2} stars)", Consts.PLIST_KEY_RATING, ratingInStars * 20, ratingInStars));
 
                         // Write the tag
-                        WriteRating(file, ratingInStars);
+                        TagLibUtility.WriteRating(file, ratingInStars);
+                    }
+
+                    // Process WAV files (after writing stats, since an ID3v2 tag should exist then)
+                    if (Settings.Current.writeInfoToWavFiles && file.MimeType == "taglib/wav")
+                    {
+                        // This will compare the file with the entry, and will write any missing info that is present in the entry - but not present in the file. Limited to the following tags: Name, Artist, Album Artist, Album, Genre, Comments, Year, Disc Number, Disc Count, Track Number, Track Count
+
+                        // Create an Id3v2 tag if it doesn't already exist.
+                        if (!file.TagTypes.HasFlag(TagTypes.Id3v2))
+                            file.GetTag(TagTypes.Id3v2, true);
+
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_TITLE)) && !string.IsNullOrEmpty(entry.trackTitle))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_TITLE, entry.trackTitle);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ARTIST)) && !string.IsNullOrEmpty(entry.artist))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_ARTIST, entry.artist);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ALBUM_ARTIST)) && !string.IsNullOrEmpty(entry.albumArtist))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_ALBUM_ARTIST, entry.albumArtist);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_ALBUM)) && !string.IsNullOrEmpty(entry.album))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_ALBUM, entry.album);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_GENRE)) && !string.IsNullOrEmpty(entry.genre))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_GENRE, entry.genre);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_DATE)) && !string.IsNullOrEmpty(entry.year))
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_DATE, entry.year);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_DISC_NUMBER)) && entry.trackNumber != null)
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_TRACK_NUMBER, entry.trackNumberDisplay);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetTextTag(file, Consts.ID3v2_FRAME_DISC_NUMBER)) && entry.discNumber != null)
+                            TagLibUtility.WriteTextTag(file, Consts.ID3v2_FRAME_DISC_NUMBER, entry.discNumberDisplay);
+                        if (string.IsNullOrEmpty(TagLibUtility.GetCommentsTag(file)) && !string.IsNullOrEmpty(entry.comments))
+                            TagLibUtility.WriteCommentsTag(file, entry.comments);
                     }
 
                     entry.wroteTags = true;
@@ -422,17 +466,27 @@ namespace if2ktool
                 // Write the modified tags to the file
                 try
                 {
-                    if (Settings.Current.dontAddID3v1 || Settings.Current.removeID3v1)
-                    {
-                        // Remove the ID3v1 tag from the tags-to-write if dontAddID3v1 is enabled or if removeID3v1 is enabled 
-                        // This is needed as TagLib by default creates an ID3v1 tag for writing
-                        // (but only if the tags on disk didn't originally have them - as to preserve the original tags)
-                        // (or if we're forcibly removing the ID3v1 tags from every file)
-                        if (Settings.Current.removeID3v1 || file.TagTypesOnDisk.HasFlag(TagTypes.Id3v1) == false)
-                            file.RemoveTags(TagTypes.Id3v1);
-                    }
+                    TagTypes initialTags = file.TagTypes;
+                    
+                    // Remove MovieId, DivX, and RiffInfo if they weren't already on the WAV file
+                    if (file.TagTypes.HasFlag(TagTypes.MovieId) && !file.TagTypesOnDisk.HasFlag(TagTypes.MovieId))
+                        file.RemoveTags(TagTypes.MovieId);
+                    if (file.TagTypes.HasFlag(TagTypes.DivX) && !file.TagTypesOnDisk.HasFlag(TagTypes.DivX))
+                        file.RemoveTags(TagTypes.DivX);
+                    if (file.TagTypes.HasFlag(TagTypes.RiffInfo) && !file.TagTypesOnDisk.HasFlag(TagTypes.RiffInfo))
+                        file.RemoveTags(TagTypes.RiffInfo);
 
-                    file.Save();
+                    if (Settings.Current.fullLogging)
+                    {
+                        TagTypes newTags = file.TagTypesOnDisk ^ file.TagTypes;
+                        
+                        Debug.Log("\tTags for writing:\t" + file.TagTypes.ToString());
+                        Debug.Log("\t    New tags:\t\t" + newTags.ToString());
+                        Debug.Log("\t    Existing tags:\t" + file.TagTypesOnDisk.ToString());
+                    }
+                    
+                    if (!Settings.Current.dryRun)
+                        file.Save();
 
                     // If we're here, it means the TagLib.File was saved correctly
                     success++;
@@ -484,6 +538,7 @@ namespace if2ktool
                 catch (Exception ex)
                 {
                     string message = "An error occurred while saving tags to \"" + entry.fileName + "\": (" + ex.Message + ")";
+                    Debug.LogError("\t" + message);
                     otherError++;
                     entryErrors.Add(entry, message);
                 }
@@ -507,220 +562,6 @@ namespace if2ktool
                 Debug.Log("\n" + Consts.WRITE_TAGS_FINISHED);
         }
 
-        // --- TagLib Methods ---
 
-        // Write custom, non-standard key-value pair to tags
-        public static void WriteCustomTag(TagLib.File file, string key, string value)
-        {
-            // Write ID3v2 TXXX Frame for MP3/AAC/AIFF
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var textframe = TagLib.Id3v2.UserTextInformationFrame.Get(tag, key, StringType.UTF16, true);
-                textframe.Text = new string[] { value };
-
-                if (Settings.Current.fullLogging)
-                    Debug.Log("\t-> Wrote ID3V2 TXXX Frame: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            // Write AppleTag AppleAnnotationBox for ALAC/MPEG4
-            else if (file.TagTypes.HasFlag(TagTypes.Apple))
-            {
-                var tag = (TagLib.Mpeg4.AppleTag)file.GetTag(TagTypes.Apple, false);
-
-                // Check to see if we don't already have a DashBox with this key, and if we do - remove it (this format allows multiple DashBoxes with the same key)
-                if (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                    RemoveCustomTag(file, key);
-
-                // AppleAdditionalInfoBoxes prepend the data with 4 null characters for some reason, so hey lets do the same! I'm sure it's for a good cause
-                tag.SetDashBox(Consts.APPLE_TAG_PREFIX + Consts.APPLE_TAG_MEANSTRING,
-                               Consts.APPLE_TAG_PREFIX + key,
-                               value.ToString());
-
-                if (Settings.Current.fullLogging)
-                    Debug.Log("\t-> Wrote AppleAnnotationBox tag: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            // Write XiphComment field for FLAC
-            else if (file.TagTypes.HasFlag(TagTypes.FlacMetadata))
-            {
-                var tag = (TagLib.Ogg.XiphComment)file.GetTag(TagTypes.Xiph);
-                tag.SetField(key, new string[] { value });
-
-                if (Settings.Current.fullLogging)
-                    Debug.Log("\t-> Wrote Ogg.XiphComment: key=\"" + key + "\", value=\"" + value + "\"");
-            }
-
-            else
-            {
-                Debug.LogWarning("\t-> Could not write data. Unsupported or missing tag type!");
-            }
-        }
-
-        // Removes a custom tag with <key> from <file>. Returns true if a tag was found and removed
-        public static bool RemoveCustomTag(TagLib.File file, string key)
-        {
-            // Remove ID3v2 TXXX Frame for MP3/AAC/AIFF
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var textFrame = TagLib.Id3v2.UserTextInformationFrame.Get(tag, key, StringType.UTF16, false);
-
-                if (textFrame != null)
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> Removed ID3V2 TXXX Frame with the key \"" + key + "\"");
-
-                    tag.RemoveFrame(textFrame);
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> An ID3V2 TXXX Frame with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-
-            // Remove AppleTag AppleAnnotationBox for ALAC/MPEG4
-            else if (file.TagTypes.HasFlag(TagTypes.Apple))
-            {
-                var tag = (TagLib.Mpeg4.AppleTag)file.GetTag(TagTypes.Apple, false);
-
-                // Only remove if there is something to remove
-                if (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                {
-                    // We have to loop until the DashBox is no longer present, since MP4 tags support multiple
-                    // tagboxes with the same key, and the user may have written to the file more than once
-                    while (tag.GetDashBox(Consts.APPLE_TAG_MEANSTRING, key) != null)
-                    {
-                        if (Settings.Current.fullLogging)
-                            Debug.Log("\t-> Removed AppleAnnotationBox with the key \"" + key + "\"");
-
-                        // Setting the DashBox to an empty string will remove it. For some reason we don't need to include 4 null characters when removing
-                        tag.SetDashBox(Consts.APPLE_TAG_MEANSTRING, key, string.Empty);
-                    }
-
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> An AppleAnnotationBox with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-
-            // Write XiphComment field for FLAC
-            else if (file.TagTypes.HasFlag(TagTypes.FlacMetadata))
-            {
-                var tag = (TagLib.Ogg.XiphComment)file.GetTag(TagTypes.Xiph);
-
-                if (tag.GetField(key) != null)
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> Removed XiphComment with the key \"" + key + "\"");
-
-                    tag.RemoveField(key);
-                    return true;
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> A XiphComment with the key \"" + key + "\" was not present");
-
-                    return false;
-                }
-            }
-            else
-            {
-                Debug.LogWarning("\t-> Could not remove data. Unsupported or missing tag type!");
-            }
-
-            return false;
-        }
-
-        // Write rating to tags using Rating enum
-        public static void WriteRating(TagLib.File file, Rating rating)
-        {
-            // Do not write if rating is unrated
-            if (rating == Rating.Unrated)
-            {
-                if (Settings.Current.fullLogging)
-                    Debug.Log("\t-> Rating not written, since the entry was unrated");
-
-                return;
-            }
-            else
-                WriteRating(file, (int)rating);
-        }
-
-        // Write rating to tags using a star rating
-        public static void WriteRating(TagLib.File file, int starRating)
-        {
-            // Write Id3v2 POPM frame
-            // See https://en.wikipedia.org/wiki/ID3#ID3v2_rating_tag_issue
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var popmFrame = TagLib.Id3v2.PopularimeterFrame.Get(tag, Consts.ID3_POPM_USER, true);
-
-                switch (starRating)
-                {
-                    case 1: popmFrame.Rating = Consts.ID3_POPM_RATING_1; break;
-                    case 2: popmFrame.Rating = Consts.ID3_POPM_RATING_2; break;
-                    case 3: popmFrame.Rating = Consts.ID3_POPM_RATING_3; break;
-                    case 4: popmFrame.Rating = Consts.ID3_POPM_RATING_4; break;
-                    case 5: popmFrame.Rating = Consts.ID3_POPM_RATING_5; break;
-                    default:
-                    {
-                        Debug.LogWarning("\t-> Invalid rating of " + starRating + " (" + (starRating * 20) + "). Skipping write...");
-                        popmFrame = null;
-                        break;
-                    }
-                }
-
-                if (Settings.Current.fullLogging && popmFrame != null)
-                    Debug.Log("\t-> Wrote ID3V2 Popularimeter (POMP) frame: value: " + popmFrame.Rating + " (" + starRating + " stars)");
-            }
-
-            // Apple uses a regular text field, with a 1-5 value
-            // FLAC uses a regular vorbis comment, with a 1-5 value
-            else if (file.TagTypes.HasFlag(TagTypes.Apple) || file.TagTypes.HasFlag(TagTypes.Xiph))
-            {
-                WriteCustomTag(file, Consts.TAG_RATING, starRating.ToString());
-            }
-        }
-
-        public static void RemoveRating(TagLib.File file)
-        {
-            // Remove Id3v2 POPM frame
-            if (file.TagTypes.HasFlag(TagTypes.Id3v2))
-            {
-                var tag = (TagLib.Id3v2.Tag)file.GetTag(TagTypes.Id3v2, true);
-                var popmFrame = TagLib.Id3v2.PopularimeterFrame.Get(tag, Consts.ID3_POPM_USER, false);
-
-                if (popmFrame != null)
-                {
-                    tag.RemoveFrame(popmFrame);
-
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> Removed ID3V2 Popularimeter (POMP) frame");
-                }
-                else
-                {
-                    if (Settings.Current.fullLogging)
-                        Debug.Log("\t-> An ID3V2 Popularimeter (POMP) frame was not present, so it was not removed");
-                }
-            }
-
-            // For all other fields, use custom rating field
-            else if (file.TagTypes.HasFlag(TagTypes.Apple) || file.TagTypes.HasFlag(TagTypes.Xiph))
-            {
-                RemoveCustomTag(file, Consts.TAG_RATING);
-            }
-        }
     }
 }

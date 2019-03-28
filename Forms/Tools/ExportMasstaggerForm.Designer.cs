@@ -46,6 +46,7 @@
             this.lblSortBy = new System.Windows.Forms.Label();
             this.chkFilterNot = new System.Windows.Forms.CheckBox();
             this.grpFilter = new System.Windows.Forms.GroupBox();
+            this.chkExportInfo = new System.Windows.Forms.CheckBox();
             this.grpSelect.SuspendLayout();
             this.grpDebugging.SuspendLayout();
             this.grpFilter.SuspendLayout();
@@ -59,7 +60,7 @@
             this.grpSelect.Controls.Add(this.chkSkipDateAdded);
             this.grpSelect.Location = new System.Drawing.Point(12, 74);
             this.grpSelect.Name = "grpSelect";
-            this.grpSelect.Size = new System.Drawing.Size(207, 101);
+            this.grpSelect.Size = new System.Drawing.Size(207, 88);
             this.grpSelect.TabIndex = 7;
             this.grpSelect.TabStop = false;
             this.grpSelect.Text = "Skip";
@@ -116,7 +117,7 @@
             // 
             // lblCount
             // 
-            this.lblCount.Location = new System.Drawing.Point(257, 184);
+            this.lblCount.Location = new System.Drawing.Point(257, 208);
             this.lblCount.Name = "lblCount";
             this.lblCount.Size = new System.Drawing.Size(90, 13);
             this.lblCount.TabIndex = 9;
@@ -125,7 +126,7 @@
             // 
             // btnExport
             // 
-            this.btnExport.Location = new System.Drawing.Point(353, 179);
+            this.btnExport.Location = new System.Drawing.Point(353, 203);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(90, 23);
             this.btnExport.TabIndex = 8;
@@ -155,6 +156,7 @@
             // 
             // grpDebugging
             // 
+            this.grpDebugging.Controls.Add(this.chkExportInfo);
             this.grpDebugging.Controls.Add(this.chkAppendUnderscore);
             this.grpDebugging.Controls.Add(this.chkDebugSortOrder);
             this.grpDebugging.Controls.Add(this.lblDebugWarning);
@@ -162,7 +164,7 @@
             this.grpDebugging.Controls.Add(this.chkAddSortField);
             this.grpDebugging.Location = new System.Drawing.Point(225, 12);
             this.grpDebugging.Name = "grpDebugging";
-            this.grpDebugging.Size = new System.Drawing.Size(218, 163);
+            this.grpDebugging.Size = new System.Drawing.Size(218, 185);
             this.grpDebugging.TabIndex = 11;
             this.grpDebugging.TabStop = false;
             this.grpDebugging.Text = "Debugging";
@@ -201,7 +203,7 @@
             // 
             this.cbSortOrder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbSortOrder.FormattingEnabled = true;
-            this.cbSortOrder.Location = new System.Drawing.Point(70, 181);
+            this.cbSortOrder.Location = new System.Drawing.Point(68, 170);
             this.cbSortOrder.Name = "cbSortOrder";
             this.cbSortOrder.Size = new System.Drawing.Size(149, 21);
             this.cbSortOrder.TabIndex = 12;
@@ -210,7 +212,7 @@
             // lblSortBy
             // 
             this.lblSortBy.AutoSize = true;
-            this.lblSortBy.Location = new System.Drawing.Point(21, 184);
+            this.lblSortBy.Location = new System.Drawing.Point(19, 173);
             this.lblSortBy.Name = "lblSortBy";
             this.lblSortBy.Size = new System.Drawing.Size(43, 13);
             this.lblSortBy.TabIndex = 13;
@@ -238,11 +240,21 @@
             this.grpFilter.TabStop = false;
             this.grpFilter.Text = "Filter";
             // 
+            // chkExportInfo
+            // 
+            this.chkExportInfo.AutoSize = true;
+            this.chkExportInfo.Location = new System.Drawing.Point(16, 156);
+            this.chkExportInfo.Name = "chkExportInfo";
+            this.chkExportInfo.Size = new System.Drawing.Size(76, 17);
+            this.chkExportInfo.TabIndex = 16;
+            this.chkExportInfo.Text = "Export info";
+            this.chkExportInfo.UseVisualStyleBackColor = true;
+            // 
             // ExportMasstaggerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(456, 215);
+            this.ClientSize = new System.Drawing.Size(456, 236);
             this.Controls.Add(this.grpFilter);
             this.Controls.Add(this.cbSortOrder);
             this.Controls.Add(this.lblCount);
@@ -287,5 +299,6 @@
         private System.Windows.Forms.CheckBox chkSkipPlayCount;
         private System.Windows.Forms.CheckBox chkDebugSortOrder;
         private System.Windows.Forms.CheckBox chkAppendUnderscore;
+        private System.Windows.Forms.CheckBox chkExportInfo;
     }
 }

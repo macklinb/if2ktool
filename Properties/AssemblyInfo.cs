@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("if2ktool-gui")]
+[assembly: AssemblyTitle("if2ktool")]
 [assembly: AssemblyDescription("A tool used to migrate some stats (play count, rating, date added and last played) from iTunes to foobar2000's foo_playcount component (Playback Statistics).")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Macklin Brosens")]

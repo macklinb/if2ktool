@@ -37,13 +37,17 @@ namespace if2ktool
                 lblIsSmartValue.Text = p.IsSmartPlaylist.ToString();
                 lblTracksValue.Text = p.Count.ToString();
             }
-            else
+            else if (lstPlaylists.SelectedItems.Count > 1)
             {
-                btnExport.Enabled = false;
+                btnExport.Enabled = true;
                 lblIdValue.Text = "-";
                 lblPersistentIdValue.Text = "-";
                 lblIsSmartValue.Text = "-";
                 lblTracksValue.Text = "-";
+            }
+            else
+            {
+                btnExport.Enabled = false;
             }
         }
 
@@ -81,8 +85,10 @@ namespace if2ktool
             }
 
             List<Entry> entries = mainForm.GetEntries(EntryFilter.AllEntries);
-
             bool extendedM3u = chkExtendedM3u.Checked;
+            bool ignoreErrors = chkIgnoreErrors.Checked;
+
+            var playlistsWithErrors = new List<string>();
 
             foreach (Playlist p in lstPlaylists.SelectedItems)
             {
@@ -97,6 +103,12 @@ namespace if2ktool
                 if (extendedM3u)
                 {
                     sb.AppendLine("#EXTM3U");
+                }
+
+                if (p.playlistItems == null || p.playlistItems.Length == 0)
+                {
+                    Debug.LogWarning("Playlist has no items!");
+                    continue;
                 }
 
                 foreach (int itemId in p.playlistItems)
@@ -122,7 +134,7 @@ namespace if2ktool
                     }
                     else if (!entry.isMapped)
                     {
-                        Debug.LogWarning("\t-> Entry " + entry.fileName + " not mapped!");
+                        Debug.LogWarning("\t-> Entry \"" + entry.fileName + " not mapped!\"");
                         errors++;
                         continue;
                     }
@@ -135,7 +147,10 @@ namespace if2ktool
 
                 if (errors > 0)
                 {
-                    Debug.LogError("A number of errors occured while building the playlist! Consult the log for more information", true);
+                    Debug.LogError("Errors occured while contructing this playlist, " + (ignoreErrors ? "saving anyway" : "and was not saved"));
+                    playlistsWithErrors.Add(p.name);
+
+                    if (!ignoreErrors) continue;
                 }
 
                 string text = sb.ToString();
@@ -144,21 +159,37 @@ namespace if2ktool
                 bool isAscii = System.Text.Encoding.UTF8.GetByteCount(text) == text.Length;
                 string ext = isAscii ? ".m3u" : ".m3u8";
 
-                if (!isAscii)
-                    Debug.Log("File contains non-ASCII characters, extension needs to be .m3u8");
+                string saveFilePath = "";
 
                 if (playlistCount == 1)
-                    savePath = Path.ChangeExtension(savePath, ext);
+                    saveFilePath = Path.ChangeExtension(savePath, ext);
+                else
+                {
+                    string validName = p.name;
+
+                    foreach (char c in Path.GetInvalidFileNameChars())
+                        validName = validName.Replace(c, '_');
+
+                    saveFilePath = Path.Combine(savePath, validName + ext);
+                }
 
                 // Save playlist to file
-                string filePath = playlistCount == 1 ? savePath : Path.Combine(savePath, p.name + ext);
-                File.Delete(filePath);
-                File.WriteAllText(filePath, sb.ToString());
+                File.Delete(saveFilePath);
+                File.WriteAllText(saveFilePath, sb.ToString());
 
+                Debug.Log("Wrote " + p.name + " to " + saveFilePath);
+            }
+
+            if (playlistsWithErrors.Count > 0)
+            {
+                Debug.LogError("A number of errors occured while building the following playlist(s):\n " + string.Join("\n", playlistsWithErrors.ToArray()) + "\n\nConsult the log for more information", true);
+            }
+
+            // If some playlists succeeded, open in explored
+            if (playlistsWithErrors.Count < lstPlaylists.SelectedItems.Count)
+            {
                 // Open in explorer
-                System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + filePath + "\"");
-
-                Debug.Log("Saved to " + filePath);
+                System.Diagnostics.Process.Start("explorer.exe", "/select, \"" + savePath + "\"");
             }
         }
     }
