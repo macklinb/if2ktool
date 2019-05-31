@@ -1418,7 +1418,7 @@ namespace if2ktool
             {
                 // Ensure that we clicked on the header and not a resize handle
                 DataGridView.HitTestInfo hit = dgvEntries.HitTest(e.X, e.Y);
-                if (hit.Type == DataGridViewHitTestType.ColumnHeader) return;
+                if (hit.Type != DataGridViewHitTestType.ColumnHeader) return;
 
                 // Avoid doing this for more that 500 rows (as it ends up taking too long)
                 if (dgvEntries.SelectedRows.Count > 5000)
